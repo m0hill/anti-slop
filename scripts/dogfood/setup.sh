@@ -15,7 +15,7 @@ const generic = [
   "no-known-value-widening", "no-module-mocking", "no-object-parameters", "no-reflect-apply",
   "no-reflect-get", "no-runtime-typeof", "no-shape-in-symbol-names", "no-unknown-parameters",
   "no-unknown-returns", "no-unknown-type-aliases", "no-unsafe-dictionary-type", "no-widen-then-assert",
-  "require-readable-spacing", "require-safety-comment-for-type-assertion",
+  "require-safety-comment-for-type-assertion",
   ...(arm === "gleam" ? [] : ["no-reduce-accumulator-copy"]),
 ];
 const gleam = [
