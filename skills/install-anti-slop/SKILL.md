@@ -114,7 +114,30 @@ Complete when the operation and target path are established and pre-existing wor
 
    Merge these entries with the generic plugin configuration rather than replacing it. Do not enable the Effect plugin merely because Effect appears transitively in a lockfile; require a direct package-manifest dependency or an explicit user request. The rule covers relative project imports. Report package-alias imports as a current limitation rather than pretending they are enforced.
 
-   Complete when the generic rules and eligible Effect rules are registered and existing configuration is preserved.
+   Register the opt-in Gleam dialect plugin only when the user explicitly requests it; it bans classes, `null`, exceptions, loops, and mutable bindings, so existing code rarely passes without migration:
+
+   ```ts
+   jsPlugins: [
+     {
+       name: "anti-slop-gleam",
+       specifier: "./tools/oxlint/anti-slop/gleam/index.ts",
+     },
+   ],
+   rules: {
+     "anti-slop-gleam/no-classes": "error",
+     "anti-slop-gleam/no-enums": "error",
+     "anti-slop-gleam/no-loops": "error",
+     "anti-slop-gleam/no-mutable-bindings": "error",
+     "anti-slop-gleam/no-null": "error",
+     "anti-slop-gleam/no-switch-catch-all": "error",
+     "anti-slop-gleam/no-throw": "error",
+     "anti-slop-gleam/no-try-catch": "error",
+   },
+   ```
+
+   The Gleam rules skip `*.ffi.*` boundary modules. Ask before moving code into boundary modules or adding overrides for other paths. When the Gleam plugin is enabled, ask whether to disable `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread`, which steer reducers toward mutation.
+
+   Complete when the generic rules and eligible Effect and Gleam rules are registered and existing configuration is preserved.
 
 4. Run the repository's lint command and typecheck. For Vite+, run the repository's full `vp check` command after adding both lint and format ignores. If findings appear in owned project source, report them and fix them only when the user asked for migration/cleanup. Do not suppress rules, weaken rule severity, add unsafe casts, or mechanically launder types to make lint pass.
 

@@ -1,0 +1,27 @@
+import { eslintCompatPlugin } from "@oxlint/plugins";
+
+import { noClassesRule } from "./rules/no-classes.ts";
+import { noEnumsRule } from "./rules/no-enums.ts";
+import { noLoopsRule } from "./rules/no-loops.ts";
+import { noMutableBindingsRule } from "./rules/no-mutable-bindings.ts";
+import { noNullRule } from "./rules/no-null.ts";
+import { noSwitchCatchAllRule } from "./rules/no-switch-catch-all.ts";
+import { noThrowRule } from "./rules/no-throw.ts";
+import { noTryCatchRule } from "./rules/no-try-catch.ts";
+
+/** Opt-in Oxlint rules that restrict TypeScript to a small, Gleam-like dialect. */
+const antiSlopGleamPlugin = eslintCompatPlugin({
+	meta: { name: "anti-slop-gleam" },
+	rules: {
+		"no-classes": noClassesRule,
+		"no-enums": noEnumsRule,
+		"no-loops": noLoopsRule,
+		"no-mutable-bindings": noMutableBindingsRule,
+		"no-null": noNullRule,
+		"no-switch-catch-all": noSwitchCatchAllRule,
+		"no-throw": noThrowRule,
+		"no-try-catch": noTryCatchRule,
+	},
+});
+
+export default antiSlopGleamPlugin;
