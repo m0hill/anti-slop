@@ -135,7 +135,7 @@ Complete when the operation and target path are established and pre-existing wor
    },
    ```
 
-   The Gleam rules skip `*.ffi.*` boundary modules. Ask before moving code into boundary modules or adding overrides for other paths. When the Gleam plugin is enabled, ask whether to disable `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread`, which steer reducers toward mutation.
+   The Gleam rules skip `*.ffi.*` boundary modules. Also add an Oxlint override for `**/*.ffi.*` that turns off `anti-slop/no-runtime-typeof` and `anti-slop/no-unknown-parameters`, because boundary modules decode untyped input. Ask before moving code into boundary modules or adding overrides for other paths. When the Gleam plugin is enabled, ask whether to disable `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread`, which steer reducers toward mutation.
 
    Complete when the generic rules and eligible Effect and Gleam rules are registered and existing configuration is preserved.
 

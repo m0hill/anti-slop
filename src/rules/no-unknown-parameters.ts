@@ -6,6 +6,34 @@ import {
   functionParameterBindingName,
   functionParameterTypeAnnotation,
 } from "../shared/function-parameters.ts";
+
+const TRANSPARENT_WRAPPERS = new Set(["Readonly", "Partial", "Required"]);
+
+function propertyName(key: ESTree.PropertyKey): string | undefined {
+  if (key.type === "Identifier") return key.name;
+  return key.type === "Literal" && typeof key.value === "string" ? key.value : undefined;
+}
+
+/** Return whether an object parameter hides an unknown member, other than `cause`, from the top-level check. */
+function wrapsUnknownType(type: ESTree.TSType): boolean {
+  if (type.type === "TSParenthesizedType") return wrapsUnknownType(type.typeAnnotation);
+  if (type.type === "TSUnionType" || type.type === "TSIntersectionType") return type.types.some(wrapsUnknownType);
+  if (type.type === "TSTypeReference") {
+    return (
+      type.typeName.type === "Identifier" &&
+      TRANSPARENT_WRAPPERS.has(type.typeName.name) &&
+      (type.typeArguments?.params.some(wrapsUnknownType) ?? false)
+    );
+  }
+  if (type.type !== "TSTypeLiteral") return false;
+  return type.members.some((member) => {
+    if (member.type !== "TSPropertySignature" || member.typeAnnotation == null) return false;
+    if (propertyName(member.key) === "cause") return false;
+    const memberType = member.typeAnnotation.typeAnnotation;
+    return containsUnknownType(memberType) || wrapsUnknownType(memberType);
+  });
+}
+
 type ParameterOwner =
   | ESTree.ArrowFunctionExpression
   | ESTree.Function
@@ -30,7 +58,7 @@ export const noUnknownParametersRule = defineRule({
     type: "problem",
     docs: {
       description:
-        "Disallow explicitly unknown function parameters except `cause` and type-predicate subjects; decode unknown input at its I/O boundary instead.",
+        "Disallow explicitly unknown function parameters, including unknown members of object parameters, except `cause` and type-predicate subjects; decode unknown input at its I/O boundary instead.",
     },
     messages: {
       unknownParameter:
@@ -42,7 +70,8 @@ export const noUnknownParametersRule = defineRule({
       for (const parameter of node.params) {
         const annotation = functionParameterTypeAnnotation(parameter);
         if (annotation === null || annotation === undefined) continue;
-        if (!containsUnknownType(annotation.typeAnnotation)) continue;
+        const type = annotation.typeAnnotation;
+        if (!containsUnknownType(type) && !wrapsUnknownType(type)) continue;
         const name = functionParameterBindingName(parameter, context.sourceCode);
         if (name === "cause" || isTypePredicateSubject(node, name)) continue;
         context.report({

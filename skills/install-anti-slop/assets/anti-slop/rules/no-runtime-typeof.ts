@@ -1,6 +1,11 @@
 import { defineRule } from "@oxlint/plugins";
 
-import type { ESTree } from "@oxlint/plugins";
+import { isGlobalIdentifier } from "../shared/scope.ts";
+
+import type { ESTree, SourceCode } from "@oxlint/plugins";
+
+const PRIMITIVE_WRAPPERS = ["String", "Number", "Boolean", "BigInt", "Object"];
+const EQUALITY_OPERATORS = ["===", "!==", "==", "!="];
 
 type RuntimeFunction = ESTree.ArrowFunctionExpression | ESTree.Function;
 
@@ -32,6 +37,25 @@ function isExistenceProbe(node: ESTree.UnaryExpression): boolean {
 	return other.type === "Literal" && other.value === "undefined";
 }
 
+/** Return whether a comparison such as `String(value) === value` re-implements a typeof check. */
+function isWrapperRoundTrip(sourceCode: SourceCode, node: ESTree.BinaryExpression): boolean {
+	if (!EQUALITY_OPERATORS.includes(node.operator)) return false;
+	return [
+		[node.left, node.right],
+		[node.right, node.left],
+	].some(([call, other]) => {
+		if (call?.type !== "CallExpression" || call.arguments.length !== 1) return false;
+		if (!PRIMITIVE_WRAPPERS.some((name) => isGlobalIdentifier(sourceCode, call.callee, name))) return false;
+		const argument = call.arguments[0];
+		return argument !== undefined && other !== undefined && sourceCode.getText(argument) === sourceCode.getText(other);
+	});
+}
+
+/** Return whether an instanceof check against the global Object re-implements `typeof value === "object"`. */
+function isObjectInstanceCheck(sourceCode: SourceCode, node: ESTree.BinaryExpression): boolean {
+	return node.operator === "instanceof" && isGlobalIdentifier(sourceCode, node.right, "Object");
+}
+
 /** Disallow runtime typeof checks that narrow unparsed values instead of decoding them. */
 export const noRuntimeTypeofRule = defineRule({
 	meta: {
@@ -43,6 +67,8 @@ export const noRuntimeTypeofRule = defineRule({
 		messages: {
 			runtimeTypeof:
 				"A `typeof` check narrows a representation without establishing its contract. Parse input at its I/O boundary, then branch on the domain value.",
+			typeofEquivalent:
+				"This comparison is a `typeof` check in disguise. Do not rewrite `typeof`; parse input at its I/O boundary, then branch on the domain value.",
 		},
 		schema: [
 			{
@@ -56,20 +82,31 @@ export const noRuntimeTypeofRule = defineRule({
 		defaultOptions: [{ allowInTypeGuards: false }],
 	},
 	createOnce(context) {
+		const allowsTypeGuards = (): boolean => {
+			const option = context.options?.[0];
+			return (
+				typeof option === "object" &&
+				option !== null &&
+				!Array.isArray(option) &&
+				option.allowInTypeGuards === true
+			);
+		};
+
 		return {
 			UnaryExpression(node) {
-				const option = context.options?.[0];
-				const allowInTypeGuards =
-					typeof option === "object" &&
-					option !== null &&
-					!Array.isArray(option) &&
-					option.allowInTypeGuards === true;
 				if (
 					node.operator === "typeof" &&
 					!isExistenceProbe(node) &&
-					(!allowInTypeGuards || !isInsideTypeGuard(node))
+					(!allowsTypeGuards() || !isInsideTypeGuard(node))
 				) {
 					context.report({ node, messageId: "runtimeTypeof" });
+				}
+			},
+			BinaryExpression(node) {
+				const disguised =
+					isWrapperRoundTrip(context.sourceCode, node) || isObjectInstanceCheck(context.sourceCode, node);
+				if (disguised && (!allowsTypeGuards() || !isInsideTypeGuard(node))) {
+					context.report({ node, messageId: "typeofEquivalent" });
 				}
 			},
 		};

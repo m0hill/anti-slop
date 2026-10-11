@@ -16,6 +16,9 @@ tester.run("anti-slop/no-unknown-parameters", noUnknownParametersRule, {
 		"declare function isString(value: unknown): value is string;",
 		"type Guards = { isString(value: unknown): value is string };",
 		"function parse(value: string | number): void {}",
+		"function fail(options: { cause: unknown }): void {}",
+		"function fail(options: Readonly<{ message: string; cause?: unknown }>): void {}",
+		"function parse(input: Readonly<{ value: string }>): void {}",
 	],
 	invalid: [
 		{ code: "function parse(value: unknown): void {}", errors: [error] },
@@ -28,6 +31,11 @@ tester.run("anti-slop/no-unknown-parameters", noUnknownParametersRule, {
 			code: "function isString(value: unknown, context: unknown): value is string { return true; }",
 			errors: [{ ...error, data: { parameter: "context" } }],
 		},
+		{ code: "function decode(input: { value: unknown; index: number }): void {}", errors: [{ ...error, data: { parameter: "input" } }] },
+		{ code: "function decode(input: Readonly<{ value: unknown }>): void {}", errors: [error] },
+		{ code: "function decode({ value }: Partial<{ value: string | unknown }>): void {}", errors: [error] },
+		{ code: "function decode(input: { nested: { value: unknown } }): void {}", errors: [error] },
+		{ code: "const decode = (input: { index: number } & { value: unknown }) => input;", errors: [error] },
 		{
 			code: "export function parse({ value }: unknown = {}): void {}",
 			errors: [{ ...error, data: { parameter: "{ value }" } }],

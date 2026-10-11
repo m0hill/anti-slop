@@ -110,6 +110,20 @@ The Gleam plugin restricts TypeScript to a small dialect modeled on [Gleam](http
 
 Every rule exempts boundary modules named `*.ffi.ts` (or any `*.ffi.{js,jsx,ts,tsx,mts,cts,mjs,cjs}`), the dialect's equivalent of Gleam's `@external`. Boundary modules wrap throwing, nullable, or class-based foreign APIs and export typed functions that return `Result` values. Use Oxlint `overrides` to relax rules for other paths, such as tests.
 
+Boundary modules are also where untyped input is decoded, so relax the generic decoding rules there. Without a schema library, agents otherwise satisfy `no-runtime-typeof` with harder-to-read equivalents:
+
+```ts
+overrides: [
+  {
+    files: ["**/*.ffi.*"],
+    rules: {
+      "anti-slop/no-runtime-typeof": "off",
+      "anti-slop/no-unknown-parameters": "off"
+    }
+  }
+]
+```
+
 ```ts
 export default defineConfig({
   jsPlugins: [
@@ -155,9 +169,9 @@ Pair the plugin with `strict`, `exactOptionalPropertyTypes`, and `noUncheckedInd
 - `no-object-parameters` — rejects `object`, unions containing it, and scoped or transparent generic aliases that resolve to it on function inputs.
 - `no-reflect-apply` — rejects global `Reflect.apply` in favor of typed function calls.
 - `no-reflect-get` — rejects global `Reflect.get` in favor of typed property access or boundary parsing.
-- `no-runtime-typeof` — requires boundary parsing instead of ad hoc `typeof` narrowing. Existence probes against the string `"undefined"` are allowed, and type predicates can be enabled explicitly.
+- `no-runtime-typeof` — requires boundary parsing instead of ad hoc `typeof` narrowing, including disguised equivalents such as `String(value) === value`, `Object(value) === value`, and `value instanceof Object`. Existence probes against the string `"undefined"` are allowed, and type predicates can be enabled explicitly.
 - `no-shape-in-symbol-names` — rejects the case-insensitive substring `shape` in locally owned symbol names while allowing static member names such as Zod's `schema.shape` that cannot be renamed locally.
-- `no-unknown-parameters` — rejects `unknown` and unions containing it on function inputs except the explicit `cause` convention and the exact subject of a type predicate.
+- `no-unknown-parameters` — rejects `unknown` and unions containing it on function inputs, including members of object parameters wrapped in `Readonly`, `Partial`, or `Required`, except the explicit `cause` convention and the exact subject of a type predicate.
 - `no-unknown-returns` — rejects explicit function contracts that resolve to `unknown`, `Promise<unknown>`, or `PromiseLike<unknown>`, including scoped and transparent generic aliases.
 - `no-unknown-type-aliases` — rejects scoped and transparent generic aliases whose resolved type is `unknown`.
 - `no-unsafe-dictionary-type` — rejects dictionary value contracts based on `unknown`, `any`, `object`, `{}`, and semantic equivalents. Generic constraints such as `T extends Record<string, unknown>` are allowed.
@@ -181,7 +195,7 @@ All Gleam dialect rules are skipped in `*.ffi.*` boundary modules.
 - `no-enums` — rejects `enum`, `const enum`, and `declare enum` in favor of literal or discriminated unions.
 - `no-loops` — rejects `while`, `do...while`, C-style `for`, and `for...in`; `for...of` and collection methods remain valid.
 - `no-mutable-bindings` — rejects `let`, `var`, and reassignment or update of bindings, including destructuring assignment. Property writes are outside this rule.
-- `no-null` — rejects `null` literals and `null` types; model absence with `undefined` or a `Result` error.
+- `no-null` — rejects `null` literals and `null` types; model absence with `undefined` or a `Result` error. Equality comparisons such as `match === null` remain valid so foreign `null` results can be narrowed precisely.
 - `no-switch-catch-all` — rejects `default` cases unless their first statement is an exhaustiveness check such as `value satisfies never;`.
 - `no-throw` — rejects `throw` in favor of returning a `Result`. Unrecoverable invariants call a `panic` helper defined in a boundary module.
 - `no-try-catch` — rejects `try` statements; catch foreign exceptions once in a boundary module and return a `Result`.

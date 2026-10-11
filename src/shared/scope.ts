@@ -13,3 +13,15 @@ export function resolveVariable(
 	}
 	return null;
 }
+
+/** Reports whether an expression names an unshadowed global binding. */
+export function isGlobalIdentifier(
+	sourceCode: SourceCode,
+	expression: ESTree.Expression,
+	name: string,
+): expression is ESTree.IdentifierReference {
+	if (expression.type !== "Identifier" || expression.name !== name) return false;
+	if (sourceCode.isGlobalReference(expression)) return true;
+	const variable = resolveVariable(sourceCode, expression);
+	return variable === null || variable.defs.length === 0;
+}

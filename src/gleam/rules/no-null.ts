@@ -2,12 +2,14 @@ import { defineRule } from "@oxlint/plugins";
 
 import { isBoundaryFile } from "../shared/boundary.ts";
 
+const EQUALITY_OPERATORS = new Set(["===", "!==", "==", "!="]);
+
 /** Keep a single absence value so absence is always modeled the same way. */
 export const noNullRule = defineRule({
 	meta: {
 		type: "problem",
 		docs: {
-			description: "Disallow null values and types outside `.ffi.ts` boundary modules.",
+			description: "Disallow null values and types outside `.ffi.ts` boundary modules; comparisons that narrow foreign null results remain valid.",
 		},
 		messages: {
 			null:
@@ -19,7 +21,10 @@ export const noNullRule = defineRule({
 
 		return {
 			Literal(node) {
-				if (node.raw === "null") context.report({ node, messageId: "null" });
+				if (node.raw !== "null") return;
+				const parent = node.parent;
+				if (parent.type === "BinaryExpression" && EQUALITY_OPERATORS.has(parent.operator)) return;
+				context.report({ node, messageId: "null" });
 			},
 			TSNullKeyword(node) {
 				context.report({ node, messageId: "null" });

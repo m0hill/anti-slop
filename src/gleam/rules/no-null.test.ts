@@ -13,12 +13,15 @@ tester.run("anti-slop-gleam/no-null", noNullRule, {
 		"const label = \"null\";",
 		"const pattern = /null/u;",
 		"const value = 0;",
+		"const match = pattern.exec(text); if (match === null) skip();",
+		"if (null != value) use(value);",
 		{ filename: boundary, code: "export function find(id: string): User | undefined { return lookup(id) ?? undefined; } const empty: string | null = null;" },
 	],
 	invalid: [
 		{ code: "const name = null;", errors: [error] },
 		{ code: "type Name = string | null;", errors: [error] },
-		{ code: "if (value === null) skip();", errors: [error] },
+		{ code: "const fallback = value ?? null;", errors: [error] },
+		{ code: "const isEmpty = value === null || null;", errors: [error] },
 		{ code: "function find(id: string): User | null { return null; }", errors: [error, error] },
 	],
 });
