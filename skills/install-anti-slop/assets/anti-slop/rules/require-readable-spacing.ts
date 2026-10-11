@@ -42,6 +42,11 @@ export const requireReadableSpacingRule: CreateRule = {
     docs: {
       description: "Require readable spacing between declarations and logical statement groups.",
     },
+    messages: {
+      ...paddingRule.meta?.messages,
+      expectedBlankLine:
+        "Expected blank line before this statement. This is a whitespace-only fix; run `oxlint --fix` to insert every missing blank line at once.",
+    },
     schema: [],
   },
 };
