@@ -5,6 +5,7 @@ import { noEnumsRule } from "./rules/no-enums.ts";
 import { noLoopsRule } from "./rules/no-loops.ts";
 import { noMutableBindingsRule } from "./rules/no-mutable-bindings.ts";
 import { noNullRule } from "./rules/no-null.ts";
+import { noSharedMutationRule } from "./rules/no-shared-mutation.ts";
 import { noSwitchCatchAllRule } from "./rules/no-switch-catch-all.ts";
 import { noThrowRule } from "./rules/no-throw.ts";
 import { noTryCatchRule } from "./rules/no-try-catch.ts";
@@ -18,6 +19,7 @@ const antiSlopGleamPlugin = eslintCompatPlugin({
 		"no-loops": noLoopsRule,
 		"no-mutable-bindings": noMutableBindingsRule,
 		"no-null": noNullRule,
+		"no-shared-mutation": noSharedMutationRule,
 		"no-switch-catch-all": noSwitchCatchAllRule,
 		"no-throw": noThrowRule,
 		"no-try-catch": noTryCatchRule,

@@ -106,7 +106,7 @@ export default defineConfig({
 
 ### Optional Gleam dialect rules
 
-The Gleam plugin restricts TypeScript to a small dialect modeled on [Gleam](https://gleam.run/documentation/conventions-patterns-and-anti-patterns/): no exceptions, `null`, classes, enums, loops, or mutable bindings, and no catch-all `default` cases. Failure is returned as a `Result`, data is modeled with types and discriminated unions, and behavior lives in module functions. Constraining the language leaves agents fewer ways to write the same thing wrong.
+The Gleam plugin restricts TypeScript to a small dialect modeled on [Gleam](https://gleam.run/documentation/conventions-patterns-and-anti-patterns/): no exceptions, `null`, classes, enums, loops, mutable bindings, or mutation of shared values, and no catch-all `default` cases. Failure is returned as a `Result`, data is modeled with types and discriminated unions, and behavior lives in module functions. Constraining the language leaves agents fewer ways to write the same thing wrong.
 
 Every rule exempts boundary modules named `*.ffi.ts` (or any `*.ffi.{js,jsx,ts,tsx,mts,cts,mjs,cjs}`), the dialect's equivalent of Gleam's `@external`. Boundary modules wrap throwing, nullable, or class-based foreign APIs and export typed functions that return `Result` values. Use Oxlint `overrides` to relax rules for other paths, such as tests.
 
@@ -139,6 +139,7 @@ export default defineConfig({
     "anti-slop-gleam/no-loops": "error",
     "anti-slop-gleam/no-mutable-bindings": "error",
     "anti-slop-gleam/no-null": "error",
+    "anti-slop-gleam/no-shared-mutation": "error",
     "anti-slop-gleam/no-switch-catch-all": "error",
     "anti-slop-gleam/no-throw": "error",
     "anti-slop-gleam/no-try-catch": "error"
@@ -154,7 +155,7 @@ export type Result<Value, Error> =
   | { readonly ok: false; readonly error: Error };
 ```
 
-Pair the plugin with `strict`, `exactOptionalPropertyTypes`, and `noUncheckedIndexedAccess` in `tsconfig.json`. Syntax rules cannot prove a `switch` is exhaustive, so also enable Oxlint's type-aware `typescript/switch-exhaustiveness-check` when type-aware linting is available. Because the dialect forbids mutation, `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread`, which steer reducers toward mutating their accumulator, conflict with it; prefer `for...of` or a small `fold` helper over `reduce`.
+Pair the plugin with `strict`, `exactOptionalPropertyTypes`, and `noUncheckedIndexedAccess` in `tsconfig.json`. Syntax rules cannot prove a `switch` is exhaustive, so also enable Oxlint's type-aware `typescript/switch-exhaustiveness-check` when type-aware linting is available. `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread` steer reducers toward mutating their accumulator, which `no-shared-mutation` rejects because the accumulator is a parameter; prefer `for...of` or a small `fold` helper over `reduce`.
 
 ## Rules
 
@@ -194,8 +195,9 @@ All Gleam dialect rules are skipped in `*.ffi.*` boundary modules.
 - `no-classes` — rejects class declarations, class expressions, and `this` outside classes in favor of types and module functions.
 - `no-enums` — rejects `enum`, `const enum`, and `declare enum` in favor of literal or discriminated unions.
 - `no-loops` — rejects `while`, `do...while`, C-style `for`, and `for...in`; `for...of` and collection methods remain valid.
-- `no-mutable-bindings` — rejects `let`, `var`, and reassignment or update of bindings, including destructuring assignment. Property writes are outside this rule.
+- `no-mutable-bindings` — rejects `let`, `var`, and reassignment or update of bindings, including destructuring assignment. Property writes are covered by `no-shared-mutation`.
 - `no-null` — rejects `null` literals and `null` types; model absence with `undefined` or a `Result` error. Equality comparisons such as `match === null` remain valid so foreign `null` results can be narrowed precisely.
+- `no-shared-mutation` — rejects property writes, `delete`, array mutators such as `push` and `sort`, and `Object.assign` targets rooted in a parameter, import, or module-level binding. Values created locally may still be built up in place. Map and Set methods are not checked because `set`, `add`, and `delete` also name ordinary service methods.
 - `no-switch-catch-all` — rejects `default` cases unless their first statement is an exhaustiveness check such as `value satisfies never;`.
 - `no-throw` — rejects `throw` in favor of returning a `Result`. Unrecoverable invariants call a `panic` helper defined in a boundary module.
 - `no-try-catch` — rejects `try` statements; catch foreign exceptions once in a boundary module and return a `Result`.

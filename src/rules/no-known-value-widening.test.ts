@@ -5,6 +5,7 @@ import { noKnownValueWideningRule } from "./no-known-value-widening.ts";
 const tester = new RuleTester({ languageOptions: { parserOptions: { lang: "ts" } } });
 
 const error = { messageId: "widening" };
+const anonymousContract = { messageId: "anonymousContract" };
 
 const prelude = "type Command = () => void; const startCommand = () => {};";
 
@@ -58,7 +59,7 @@ tester.run("anti-slop/no-known-value-widening", noKnownValueWideningRule, {
 		},
 		{
 			code: `${prelude} const commands: { start: Command } = { start: startCommand };`,
-			errors: [error],
+			errors: [anonymousContract],
 		},
 		{
 			code: `${prelude} const commands = { start: startCommand } as Record<string, Command>;`,
@@ -82,7 +83,7 @@ tester.run("anti-slop/no-known-value-widening", noKnownValueWideningRule, {
 		},
 		{
 			code: `${prelude} function create(): { start: Command } { return { start: startCommand }; }`,
-			errors: [error],
+			errors: [anonymousContract],
 		},
 		{
 			code: `${prelude} const source = { start: startCommand }; const commands: Record<string, Command> = source;`,
@@ -135,6 +136,10 @@ tester.run("anti-slop/no-known-value-widening", noKnownValueWideningRule, {
 		{
 			code: `${prelude} const commands: Record<string | 'start', Command> = { start: startCommand };`,
 			errors: [error],
+		},
+		{
+			code: "function ok<T>(value: T): { readonly ok: true; readonly value: T } { return { ok: true, value }; }",
+			errors: [anonymousContract],
 		},
 		{ code: "const value: unknown = 1;", errors: [error] },
 		{ code: "const value: object = [];", errors: [error] },
