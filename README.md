@@ -110,19 +110,7 @@ The Gleam plugin restricts TypeScript to a small dialect modeled on [Gleam](http
 
 Every rule exempts boundary modules named `*.ffi.ts` (or any `*.ffi.{js,jsx,ts,tsx,mts,cts,mjs,cjs}`), the dialect's equivalent of Gleam's `@external`. Boundary modules wrap throwing, nullable, or class-based foreign APIs and export typed functions that return `Result` values. Use Oxlint `overrides` to relax rules for other paths, such as tests.
 
-Boundary modules are also where untyped input is decoded, so relax the generic decoding rules there. Without a schema library, agents otherwise satisfy `no-runtime-typeof` with harder-to-read equivalents:
-
-```ts
-overrides: [
-  {
-    files: ["**/*.ffi.*"],
-    rules: {
-      "anti-slop/no-runtime-typeof": "off",
-      "anti-slop/no-unknown-parameters": "off"
-    }
-  }
-]
-```
+Decode untyped input with a schema library. If the project has none, add [Zod](https://zod.dev): `schema.safeParse(value)` already returns a result value instead of throwing, which fits the dialect. Without a schema library, agents satisfy `no-runtime-typeof` with harder-to-read equivalents of `typeof`.
 
 ```ts
 export default defineConfig({
@@ -327,7 +315,7 @@ if (typeof input === "string") {
 }
 ```
 
-Schema-free projects can permit `typeof` checks directly inside type predicate and
+Parse with the project's schema library instead, and add Zod if there is none. Without one, agents tend to satisfy the rule with equivalents such as `value?.constructor === String`. Projects that cannot add a schema library can permit `typeof` checks directly inside type predicate and
 assertion functions while continuing to reject ad hoc checks elsewhere:
 
 ```json

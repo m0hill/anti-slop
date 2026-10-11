@@ -66,9 +66,9 @@ export const noRuntimeTypeofRule = defineRule({
 		},
 		messages: {
 			runtimeTypeof:
-				"A `typeof` check narrows a representation without establishing its contract. Parse input at its I/O boundary, then branch on the domain value.",
+				"A `typeof` check narrows a representation without establishing its contract. Parse input at its I/O boundary with the project's schema library (add Zod if there is none), for example `RuleSchema.safeParse(JSON.parse(text))`, then branch on the domain value.",
 			typeofEquivalent:
-				"This comparison is a `typeof` check in disguise. Do not rewrite `typeof`; parse input at its I/O boundary, then branch on the domain value.",
+				"This comparison is a `typeof` check in disguise. Do not rewrite `typeof`; parse input at its I/O boundary with the project's schema library (add Zod if there is none), then branch on the domain value.",
 		},
 		schema: [
 			{

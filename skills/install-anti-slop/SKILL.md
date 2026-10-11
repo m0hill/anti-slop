@@ -64,6 +64,8 @@ Complete when the operation and target path are established and pre-existing wor
 
    For Vite+, add these fields to `lint.ignorePatterns` and `lint.jsPlugins`. Also merge the same patterns into `fmt.ignorePatterns` so `vp check` does not reformat installed agent assets or the vendored plugin. Merge existing entries instead of replacing them.
 
+   `no-runtime-typeof` and `no-unknown-parameters` assume a runtime schema library such as Zod, Valibot, ArkType, or Effect Schema. If the repository has none, recommend adding Zod and ask before changing dependencies. Without one, agents work around these rules with harder-to-read equivalents of `typeof`.
+
    Enable these rules at `"error"`, including the native Oxlint companion rule:
 
    ```json
@@ -136,7 +138,7 @@ Complete when the operation and target path are established and pre-existing wor
    },
    ```
 
-   The Gleam rules skip `*.ffi.*` boundary modules. Also add an Oxlint override for `**/*.ffi.*` that turns off `anti-slop/no-runtime-typeof` and `anti-slop/no-unknown-parameters`, because boundary modules decode untyped input. Ask before moving code into boundary modules or adding overrides for other paths. When the Gleam plugin is enabled, ask whether to disable `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread`, which steer reducers toward mutation.
+   The Gleam rules skip `*.ffi.*` boundary modules. Boundary modules decode untyped input with the repository's schema library. Ask before moving code into boundary modules or adding overrides for other paths. When the Gleam plugin is enabled, ask whether to disable `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread`, which steer reducers toward mutation.
 
    Complete when the generic rules and eligible Effect and Gleam rules are registered and existing configuration is preserved.
 

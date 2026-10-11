@@ -30,10 +30,6 @@ if (arm === "plain") config.rules["oxc/no-accumulating-spread"] = "error";
 if (arm === "gleam") {
   config.jsPlugins.push({ name: "anti-slop-gleam", specifier: `${repo}/src/gleam/index.ts` });
   for (const rule of gleam) config.rules[`anti-slop-gleam/${rule}`] = "error";
-  config.overrides = [{
-    files: ["**/*.ffi.*"],
-    rules: { "anti-slop/no-runtime-typeof": "off", "anti-slop/no-unknown-parameters": "off" },
-  }];
 }
 console.log(JSON.stringify(config, null, 2));
 NODE
@@ -64,6 +60,8 @@ echo "== typecheck"; $repo/node_modules/.bin/tsc -p tsconfig.json || exit 1
 echo "== test"; node --test 'src/**/*.test.ts' || exit 1
 SH
 chmod +x "$directory/check.sh"
-echo '{ "type": "module" }' > "$directory/package.json"
+# Zod stands in for the schema library a real project would have.
+echo '{ "type": "module", "dependencies": { "zod": "4.6.6" } }' > "$directory/package.json"
+(cd "$directory" && pnpm install --silent --prefer-offline > /dev/null)
 (cd "$directory" && shasum .oxlintrc.json tsconfig.json check.sh > .trial/checksums)
 echo "Created $arm trial at $directory"

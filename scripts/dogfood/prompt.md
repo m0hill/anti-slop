@@ -1,4 +1,4 @@
-You are working in the TypeScript project at {{directory}} (Node 24, ESM, `.ts` files run directly through Node type stripping; no package installs are available or needed). Work only inside that directory.
+You are working in the TypeScript project at {{directory}} (Node 24, ESM, `.ts` files run directly through Node type stripping; dependencies in `package.json` are installed; no other package installs are available). Work only inside that directory.
 
 {{task}}
 
