@@ -64,7 +64,7 @@ function isRejectionReason(owner: ParameterOwner, parameterIndex: number): boole
   if (parameterIndex !== 0) return false;
   if (owner.type !== "ArrowFunctionExpression" && owner.type !== "FunctionExpression") return false;
   const call = owner.parent;
-  if (call?.type !== "CallExpression") return false;
+  if (call.type !== "CallExpression") return false;
   const index = rejectionHandlerIndex(call.callee);
   return index !== undefined && call.arguments[index] === owner;
 }

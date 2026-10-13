@@ -198,7 +198,7 @@ function aliasSubstitutions(
 	for (const [index, parameter] of parameters.entries()) {
 		const explicitArgument = arguments_[index];
 		const argument = explicitArgument ?? parameter.default;
-		if (argument === null || argument === undefined) return null;
+		if (argument === null) return null;
 		const argumentSubstitutions = explicitArgument === undefined ? next : base;
 		next.set(parameter.name.name, {
 			type: argument,
@@ -223,7 +223,7 @@ export function resolvedTypeMatches(
 			const name = typeReferenceName(current);
 			if (name !== null) {
 				const substitution = substitutions.get(name);
-				if (substitution !== undefined && !current.typeArguments?.params.length) {
+				if (substitution !== undefined && (current.typeArguments === null || current.typeArguments.params.length === 0)) {
 					return evaluate(
 						substitution.type,
 						substitution.substitutions,

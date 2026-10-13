@@ -62,8 +62,7 @@ function hasSafetyComment(
   node: TypeAssertion,
   pattern: RegExp,
 ): boolean {
-  let current: ESTree.Node = node;
-  while (true) {
+  for (let current: ESTree.Node = node; ; current = current.parent) {
     if (hasSafetyJustificationBefore(sourceCode, current, node, pattern)) return true;
     if (commentOwnerKinds.has(current.type)) {
       const exportDeclaration = current.parent;
@@ -74,7 +73,6 @@ function hasSafetyComment(
       );
     }
     if (current.parent.type === "Program") return false;
-    current = current.parent;
   }
 }
 
@@ -111,7 +109,7 @@ export const requireSafetyCommentForTypeAssertionRule = defineRule({
 
     const checkAssertion = (node: TypeAssertion) => {
       if (isConstAssertion(node)) return;
-      const markers = configuredSafetyMarkers(context.options?.[0]);
+      const markers = configuredSafetyMarkers(context.options[0]);
       const patternKey = markers.join("\u0000");
       const pattern = patterns.get(patternKey) ?? markerPattern(markers);
       patterns.set(patternKey, pattern);

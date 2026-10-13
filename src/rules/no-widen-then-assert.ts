@@ -119,25 +119,25 @@ function typesHaveSameSyntax(
   );
 }
 
+const objectTypeKinds = new Set<ESTree.TSType["type"]>([
+  "TSArrayType",
+  "TSConstructorType",
+  "TSFunctionType",
+  "TSMappedType",
+  "TSObjectKeyword",
+  "TSTupleType",
+]);
+
 function isDefinitelyObjectType(type: ESTree.TSType): boolean {
   const unwrapped = unwrapTypeParentheses(type);
-  switch (unwrapped.type) {
-    case "TSArrayType":
-    case "TSConstructorType":
-    case "TSFunctionType":
-    case "TSMappedType":
-    case "TSObjectKeyword":
-    case "TSTupleType":
-      return true;
-    case "TSTypeLiteral":
-      return unwrapped.members.length > 0;
-    case "TSIntersectionType":
-      return unwrapped.types.every(isDefinitelyObjectType);
-    case "TSTypeOperator":
-      return unwrapped.operator === "readonly" && isDefinitelyObjectType(unwrapped.typeAnnotation);
-    default:
-      return false;
-  }
+  if (objectTypeKinds.has(unwrapped.type)) return true;
+  if (unwrapped.type === "TSTypeLiteral") return unwrapped.members.length > 0;
+  if (unwrapped.type === "TSIntersectionType") return unwrapped.types.every(isDefinitelyObjectType);
+  return (
+    unwrapped.type === "TSTypeOperator" &&
+    unwrapped.operator === "readonly" &&
+    isDefinitelyObjectType(unwrapped.typeAnnotation)
+  );
 }
 
 function isDefinitelyNarrowerRecordType(type: ESTree.TSType): boolean {

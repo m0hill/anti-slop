@@ -83,7 +83,7 @@ export const noRuntimeTypeofRule = defineRule({
 	},
 	createOnce(context) {
 		const allowsTypeGuards = (): boolean => {
-			const option = context.options?.[0];
+			const option = context.options[0];
 			return (
 				typeof option === "object" &&
 				option !== null &&

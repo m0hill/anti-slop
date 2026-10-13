@@ -68,7 +68,8 @@ function isInsideTypeAliasDeclaration(node: ESTree.Node): boolean {
 }
 
 function isPlainAliasConsumerUse(node: ESTree.TSType, environment: TypeEnvironment): boolean {
-	if (node.type !== "TSTypeReference" || node.typeArguments?.params.length) return false;
+	if (node.type !== "TSTypeReference") return false;
+	if (node.typeArguments !== null && node.typeArguments.params.length > 0) return false;
 	const name = typeReferenceName(node);
 	return (
 		name !== null &&
@@ -79,8 +80,8 @@ function isPlainAliasConsumerUse(node: ESTree.TSType, environment: TypeEnvironme
 
 function isInsideTypeParameterConstraint(node: ESTree.TSType): boolean {
 	let child: ESTree.Node = node;
-	let parent: ESTree.Node | null = child.parent;
-	while (parent !== null && parent.type !== "Program") {
+	let parent: ESTree.Node = child.parent;
+	while (parent.type !== "Program") {
 		if (parent.type === "TSTypeParameter" && parent.constraint === child) return true;
 		child = parent;
 		parent = child.parent;
@@ -92,8 +93,8 @@ function shouldReportType(node: ESTree.TSType, environment: TypeEnvironment): bo
 	if (isInsideTypeParameterConstraint(node)) return false;
 	if (isPlainAliasConsumerUse(node, environment)) return false;
 	if (classifyUnsafeDictionary(node, environment) === null) return false;
-	let current: ESTree.Node | null = node.parent;
-	while (current !== null && current.type !== "Program") {
+	let current: ESTree.Node = node.parent;
+	while (current.type !== "Program") {
 		if (isTypeNode(current) && classifyUnsafeDictionary(current, environment) !== null)
 			return false;
 		current = current.parent;
@@ -139,7 +140,6 @@ export const noUnsafeDictionaryTypeRule = defineRule({
 			TSIndexSignature(node) {
 				if (
 					environment === null ||
-					node.typeAnnotation === null ||
 					node.parent.type === "TSTypeLiteral"
 				)
 					return;

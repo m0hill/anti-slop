@@ -94,9 +94,7 @@ function isUnappliedReferenceTo(type: ESTree.TSType, name: string): boolean {
 	return (
 		unwrapped.type === "TSTypeReference" &&
 		typeReferenceName(unwrapped) === name &&
-		(unwrapped.typeArguments === null ||
-			unwrapped.typeArguments === undefined ||
-			unwrapped.typeArguments.params.length === 0)
+		(unwrapped.typeArguments === null || unwrapped.typeArguments.params.length === 0)
 	);
 }
 
@@ -120,7 +118,6 @@ function isEffectivelyEmptyMember(member: ESTree.TSSignature): boolean {
 		member.type === "TSPropertySignature" &&
 		member.optional === true &&
 		member.typeAnnotation !== null &&
-		member.typeAnnotation !== undefined &&
 		isNeverType(member.typeAnnotation.typeAnnotation)
 	);
 }
@@ -167,7 +164,7 @@ function aliasSubstitution(
 	const next = new Map(base);
 	for (const [index, parameter] of parameters.entries()) {
 		const argument = arguments_[index] ?? parameter.default;
-		if (argument === null || argument === undefined) return null;
+		if (argument === null) return null;
 		next.set(parameter.name.name, resolvedSubstitutionArgument(argument, next));
 	}
 	return next;
@@ -197,9 +194,8 @@ function unsafeDirectValue(
 			unsafeDirectValue(member, environment, substitutions, resolvingAliases),
 		);
 		if (unsafeMembers.includes("any")) return "any";
-		return unsafeMembers.length > 0 && unsafeMembers.every((member) => member !== null)
-			? unsafeMembers[0]
-			: null;
+		const [first] = unsafeMembers;
+		return first !== undefined && unsafeMembers.every((member) => member !== null) ? first : null;
 	}
 	if (unwrapped.type !== "TSTypeReference") return null;
 	const name = typeReferenceName(unwrapped);
@@ -239,7 +235,7 @@ function dictionaryValueTypes(
 
 	if (unwrapped.type === "TSTypeLiteral") {
 		return unwrapped.members.flatMap((member): readonly ResolvedType[] =>
-			member.type === "TSIndexSignature" && member.typeAnnotation !== null
+			member.type === "TSIndexSignature"
 				? [{ type: member.typeAnnotation.typeAnnotation, substitutions }]
 				: [],
 		);

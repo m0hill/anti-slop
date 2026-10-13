@@ -33,7 +33,7 @@ export const preferEffectMatchRule = defineRule({
 
 		return {
 			ConditionalExpression(node) {
-				if (node.parent?.type === "ConditionalExpression") return;
+				if (node.parent.type === "ConditionalExpression") return;
 				const value = comparedValue(node.test);
 				if (value === undefined) return;
 
