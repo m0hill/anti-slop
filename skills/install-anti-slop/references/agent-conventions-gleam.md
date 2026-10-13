@@ -19,7 +19,7 @@ This project's lint rules restrict TypeScript to a small, Gleam-like dialect. Th
 - Turn an awaited promise's rejection into a `Result` where you await it: `await promise.then(ok, (cause: unknown) => err(...))`. When a framework expects a thrown error, such as a tool or route handler, keep the logic returning a `Result` and throw once, in a small `.ffi.ts` helper that unwraps it.
 - Represent absence as `undefined`. Convert a foreign `null` where it arrives: `headers.get(name) ?? undefined`.
 - Wrap foreign code that throws, returns `null`, or needs a class in a thin `*.ffi.ts` module that returns `Result` or `undefined`. Create the real clock, randomness, network, and file access in a `.ffi.ts` entry point and pass them in. Keep domain logic out of `.ffi.ts` files; the dialect's rules do not check them.
-- Repeat with recursion that takes a counter and fails at a named limit. Tests may use loops, `let`, `throw`, `try`, real timers, and `null` in fixtures of wire data.
+- Repeat with recursion that takes a counter and fails at a named limit. Work that ends when its input runs out, such as draining a queue of waiting items, needs no counter: recurse until the queue is empty. Tests may use loops, `let`, `throw`, `try`, real timers, and `null` in fixtures of wire data.
 
 ### What the Gleam rules reject
 
