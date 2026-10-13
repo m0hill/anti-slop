@@ -18,3 +18,7 @@ This project's lint rules restrict TypeScript to a small, Gleam-like dialect. Th
 - Represent absence as `undefined`. Convert a foreign `null` where it arrives: `headers.get(name) ?? undefined`.
 - Wrap foreign code that throws, returns `null`, or needs a class in a thin `*.ffi.ts` module that returns `Result` or `undefined`. Create the real clock, randomness, network, and file access in a `.ffi.ts` entry point and pass them in. Keep domain logic out of `.ffi.ts` files; the dialect's rules do not check them.
 - Repeat with recursion that takes a counter and fails at a named limit. Tests may use loops, `let`, and `null` in fixtures of wire data.
+
+### What the Gleam rules reject
+
+Outside `*.ffi.*` files: `no-throw` (return a `Result`), `no-try-catch` (wrap throwing code in a `.ffi.ts` module), `no-null` (use `undefined`), `no-classes` (types plus functions), `no-enums` (string literal unions), `no-loops` (collection methods, `for...of`, or bounded recursion), `no-mutable-bindings` (`const` only), `no-shared-mutation` (return new values instead of changing parameters, imports, or module state), and `no-ambient-capabilities` (take the clock, randomness, timers, `fetch`, `process`, and file access as parameters).
