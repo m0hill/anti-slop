@@ -15,6 +15,7 @@ echo "{ \"extends\": [$configs] }" > "$directory/.oxlintrc.json"
 
 # Trial projects carry the same agent conventions the install skill offers to add.
 cp "$repo/skills/install-anti-slop/references/agent-conventions.md" "$directory/AGENTS.md"
+[ "$arm" = gleam ] && { echo; cat "$repo/skills/install-anti-slop/references/agent-conventions-gleam.md"; } >> "$directory/AGENTS.md"
 
 cat > "$directory/tsconfig.json" <<JSON
 {
