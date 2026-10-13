@@ -13,7 +13,7 @@ export const noLoopsRule = defineRule({
 		},
 		messages: {
 			loop:
-				"Replace this loop with `map`, `filter`, `flatMap`, `some`, `every`, `find`, or `for (const item of items)`. Use `Object.entries` instead of `for...in`.",
+				"Replace this loop with `map`, `filter`, `flatMap`, `some`, `every`, `find`, or `for (const item of items)`. Use `Object.entries` instead of `for...in`. For repeat-until work such as retries, polling, or pagination, recurse with a counter parameter and return a failure at a named limit (`if (page >= MAX_PAGES) return err(...)`), because JavaScript recursion is not unbounded the way Gleam's is.",
 		},
 	},
 	create(context) {

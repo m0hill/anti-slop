@@ -232,7 +232,7 @@ All Gleam dialect rules are skipped in `*.ffi.*` boundary modules.
 
 - `no-classes` — rejects class declarations, class expressions, and `this` outside classes in favor of types and module functions.
 - `no-enums` — rejects `enum`, `const enum`, and `declare enum` in favor of literal or discriminated unions.
-- `no-loops` — rejects `while`, `do...while`, C-style `for`, and `for...in`; `for...of` and collection methods remain valid.
+- `no-loops` — rejects `while`, `do...while`, C-style `for`, and `for...in`; `for...of` and collection methods remain valid. Repeat-until work such as retries, polling, or pagination recurses with a counter parameter and fails at a named limit. Gleam recursion runs in constant stack space; JavaScript recursion does not, and an unbounded remote loop never ends.
 - `no-mutable-bindings` — rejects `let`, `var`, and reassignment or update of bindings, including destructuring assignment. Property writes are covered by `no-shared-mutation`.
 - `no-null` — rejects `null` literals and `null` types; model absence with `undefined` or a `Result` error. Foreign `null` needs no boundary module: convert it where it arrives with `?? undefined`, or narrow it with an equality comparison such as `match === null`.
 - `no-shared-mutation` — rejects property writes, `delete`, array mutators such as `push` and `sort`, and `Object.assign` targets rooted in a parameter, import, or module-level binding. Values created locally may still be built up in place. Map and Set methods are not checked because `set`, `add`, and `delete` also name ordinary service methods.
