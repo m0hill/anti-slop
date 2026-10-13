@@ -26,7 +26,8 @@
       ],
       "rules": {
         "anti-slop-gleam/no-loops": "off",
-        "anti-slop-gleam/no-mutable-bindings": "off"
+        "anti-slop-gleam/no-mutable-bindings": "off",
+        "anti-slop-gleam/no-null": "off"
       }
     }
   ]

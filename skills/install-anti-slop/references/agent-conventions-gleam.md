@@ -17,4 +17,4 @@ This project's lint rules restrict TypeScript to a small, Gleam-like dialect. Th
 - Pass state in and return the new state. Update with spreads (`{ ...book, status }`), `toSorted`, and `new Map([...map, [key, value]])`; build a local `const` value when that reads better.
 - Represent absence as `undefined`. Convert a foreign `null` where it arrives: `headers.get(name) ?? undefined`.
 - Wrap foreign code that throws, returns `null`, or needs a class in a thin `*.ffi.ts` module that returns `Result` or `undefined`. Create the real clock, randomness, network, and file access in a `.ffi.ts` entry point and pass them in. Keep domain logic out of `.ffi.ts` files; the dialect's rules do not check them.
-- Repeat with recursion that takes a counter and fails at a named limit. Tests may use loops and `let`.
+- Repeat with recursion that takes a counter and fails at a named limit. Tests may use loops, `let`, and `null` in fixtures of wire data.

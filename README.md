@@ -89,7 +89,7 @@ Lint messages reach an agent only after it writes a banned pattern. [`agent-conv
 
 ### Test files
 
-Tests keep every rule, with one exception in the Gleam dialect. The conventions remove the reasons tests hit the generic rules: fixtures typed with the schema's input type need no `unknown` or `object` parameters, and `node:assert/strict` narrows results without helper functions. The Gleam dialect turns off `no-loops` and `no-mutable-bindings` for `*.test.*` and `*.spec.*` files, because tests repeat actions and fakes such as a clock must change state.
+Tests keep every rule, with one exception in the Gleam dialect. The conventions remove the reasons tests hit the generic rules: fixtures typed with the schema's input type need no `unknown` or `object` parameters, and `node:assert/strict` narrows results without helper functions. The Gleam dialect turns off `no-loops`, `no-mutable-bindings`, and `no-null` for `*.test.*` and `*.spec.*` files: tests repeat actions, fakes such as a clock must change state, and fixtures must reproduce wire data that contains `null`.
 
 ### Optional Effect rules
 

@@ -36,10 +36,10 @@ echo "Running $(wc -l < "$root/trials.txt" | tr -d ' ') trials with $model"
 # Agents run without user settings, skills, or MCP servers. Their shell is unrestricted, as in a
 # real project: restricting it made agents leave behind lint-probe files they could not delete.
 xargs -P "${DOGFOOD_PARALLEL:-6}" -I {} sh -c '
-  cd "$1" && claude -p --model "$2" --output-format json --no-session-persistence \
+  cd "$1" && claude -p --model "$2" --output-format stream-json --verbose --no-session-persistence \
     --setting-sources project,local --disable-slash-commands --strict-mcp-config \
     --allowedTools Read Write Edit Glob Grep Bash \
-    < .trial/prompt.md > .trial/transcript.json 2> .trial/stderr.txt
+    < .trial/prompt.md > .trial/transcript.jsonl 2> .trial/stderr.txt
   echo "done $1"
 ' _ {} "$model" < "$root/trials.txt"
 

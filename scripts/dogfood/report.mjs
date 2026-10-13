@@ -63,8 +63,10 @@ function measure(directory) {
     }
   }
   const source = files.filter((path) => !path.includes(".test.")).map((path) => readFileSync(path, "utf8")).join("\n");
-  const transcriptPath = join(directory, ".trial", "transcript.json");
-  const transcript = existsSync(transcriptPath) ? JSON.parse(readFileSync(transcriptPath, "utf8") || "{}") : {};
+  // The transcript records every tool call; its last line is the session result.
+  const transcriptPath = join(directory, ".trial", "transcript.jsonl");
+  const lines = existsSync(transcriptPath) ? readFileSync(transcriptPath, "utf8").trim().split("\n") : [];
+  const transcript = lines.length > 0 ? JSON.parse(lines.at(-1)) : {};
   let untouched = true;
   try {
     execFileSync("shasum", ["-c", ".trial/checksums"], { cwd: directory, stdio: "ignore" });
