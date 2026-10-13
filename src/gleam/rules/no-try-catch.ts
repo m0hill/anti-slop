@@ -11,7 +11,7 @@ export const noTryCatchRule = defineRule({
 		},
 		messages: {
 			tryCatch:
-				"Move this try statement into a `.ffi.ts` boundary module that wraps the throwing API and returns a Result. Callers handle the Result instead of catching.",
+				"Move this try statement into a `.ffi.ts` boundary module that wraps the throwing API and returns a Result. Callers handle the Result instead of catching. For an awaited promise, convert the rejection inline instead: `await promise.then(ok, (cause: unknown) => err(...))`.",
 		},
 	},
 	create(context) {

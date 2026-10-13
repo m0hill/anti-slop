@@ -83,6 +83,8 @@ Its options also reject a `default` on a `switch` that already handles every mem
 
 Run Oxlint with `--format default` in the repository's lint script. Without a terminal, Oxlint prints nothing when lint passes, so an agent cannot tell a clean run from one that checked nothing; in trials, agents wrote throwaway rule-breaking files to find out.
 
+`strict-boolean-expressions` allows an optional boolean in a condition (`if (context?.hasUI)`), because `undefined` and `false` mean the same there; optional strings and numbers stay reported, because `""` and `0` are where truthiness bugs hide. Plain `.js` files have no types, so every value in them is `any`; `recommended.json` turns off the `no-unsafe-*` rules and `strict-boolean-expressions` for `*.js`, `*.jsx`, `*.mjs`, and `*.cjs` rather than report every line.
+
 Type-aware rules read the nearest `tsconfig.json`. Enable `strict`, `exactOptionalPropertyTypes`, and `noUncheckedIndexedAccess` there; without `noUncheckedIndexedAccess`, `no-unnecessary-condition` reports necessary `undefined` checks on indexed reads as always false.
 
 ### Agent conventions
@@ -91,7 +93,7 @@ Lint messages reach an agent only after it writes a banned pattern. [`agent-conv
 
 ### Test files
 
-Tests keep every rule, with one exception in the Gleam dialect. The conventions remove the reasons tests hit the generic rules: fixtures typed with the schema's input type need no `unknown` or `object` parameters, and `node:assert/strict` narrows results without helper functions. The Gleam dialect turns off `no-loops`, `no-mutable-bindings`, and `no-null` for `*.test.*` and `*.spec.*` files: tests repeat actions, fakes such as a clock must change state, and fixtures must reproduce wire data that contains `null`.
+Tests keep every rule, with one exception in the Gleam dialect. The conventions remove the reasons tests hit the generic rules: fixtures typed with the schema's input type need no `unknown` or `object` parameters, and `node:assert/strict` narrows results without helper functions. The Gleam dialect turns off `no-loops`, `no-mutable-bindings`, `no-null`, `no-ambient-capabilities`, `no-throw`, and `no-try-catch` for `*.test.*` and `*.spec.*` files: tests repeat actions, fakes such as a clock must change state, fixtures must reproduce wire data that contains `null`, and tests of real processes or timers must wait on the real clock and probe for failures. `no-classes` stays on, because a fake can be an object literal.
 
 ### Optional Effect rules
 
@@ -149,15 +151,15 @@ export type Result<Value, Error> =
 
 All Gleam dialect rules are skipped in `*.ffi.*` boundary modules.
 
-- `no-classes` — rejects class declarations, class expressions, and `this` outside classes in favor of types and module functions.
+- `no-classes` — rejects class declarations, class expressions, and `this` outside classes in favor of types and module functions. `Error` subclasses get a message pointing to failure variants returned in a `Result`; classes that extend another base, such as a UI framework component or `HTMLElement`, get one pointing to a `.ffi.ts` or `.ffi.tsx` module, because the platform requires them.
 - `no-enums` — rejects `enum`, `const enum`, and `declare enum` in favor of literal or discriminated unions.
 - `no-ambient-capabilities` — rejects direct use of the clock (`Date.now()`, `new Date()`), randomness, timers, global `fetch`, `process`, and I/O modules such as `node:fs`. Take them as parameters and pass the real ones in from a `.ffi.ts` entry point, as Effect does with services and layers; tests then pass fakes. `new Date(value)` and type-only imports remain valid.
 - `no-loops` — rejects `while`, `do...while`, C-style `for`, and `for...in`; `for...of` and collection methods remain valid. Repeat-until work such as retries, polling, or pagination recurses with a counter parameter and fails at a named limit. Gleam recursion runs in constant stack space; JavaScript recursion does not, and an unbounded remote loop never ends.
-- `no-mutable-bindings` — rejects `let`, `var`, and reassignment or update of bindings, including destructuring assignment. Property writes are covered by `no-shared-mutation`.
+- `no-mutable-bindings` — rejects `let`, `var`, and reassignment or update of bindings, including destructuring assignment. Property writes are covered by `no-shared-mutation`. A binding that only callbacks reassign is long-lived state rather than a value computed in steps, so its message asks for one `const state` object owned by the function that sets it up, instead of suggesting a new `const`.
 - `no-null` — rejects `null` literals and `null` types; model absence with `undefined` or a `Result` error. Foreign `null` needs no boundary module: convert it where it arrives with `?? undefined`, or narrow it with an equality comparison such as `match === null`.
 - `no-shared-mutation` — rejects property writes, `delete`, array mutators such as `push` and `sort`, and `Object.assign` targets rooted in a parameter, import, or module-level binding. Values created locally may still be built up in place. Map and Set methods are not checked because `set`, `add`, and `delete` also name ordinary service methods.
 - `no-throw` — rejects `throw` in favor of returning a `Result`. Unrecoverable invariants call a `panic` helper defined in a boundary module.
-- `no-try-catch` — rejects `try` statements; catch foreign exceptions once in a boundary module and return a `Result`.
+- `no-try-catch` — rejects `try` statements; catch foreign exceptions once in a boundary module and return a `Result`, or convert an awaited promise's rejection inline with `.then(ok, (cause: unknown) => err(...))`.
 
 ### Analysis boundaries
 

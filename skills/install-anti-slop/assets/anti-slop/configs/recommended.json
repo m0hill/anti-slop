@@ -60,7 +60,12 @@
     "typescript/prefer-promise-reject-errors": "error",
     "typescript/restrict-plus-operands": "error",
     "typescript/restrict-template-expressions": "error",
-    "typescript/strict-boolean-expressions": "error",
+    "typescript/strict-boolean-expressions": [
+      "error",
+      {
+        "allowNullableBoolean": true
+      }
+    ],
     "typescript/switch-exhaustiveness-check": [
       "error",
       {
@@ -69,5 +74,23 @@
       }
     ],
     "typescript/use-unknown-in-catch-callback-variable": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.js",
+        "**/*.jsx",
+        "**/*.mjs",
+        "**/*.cjs"
+      ],
+      "rules": {
+        "typescript/no-unsafe-argument": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-return": "off",
+        "typescript/strict-boolean-expressions": "off"
+      }
+    }
+  ]
 }

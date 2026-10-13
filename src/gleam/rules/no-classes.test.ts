@@ -15,6 +15,20 @@ tester.run("anti-slop-gleam/no-classes", noClassesRule, {
 		{ code: "class User { constructor(readonly name: string) {} }", errors: [{ messageId: "class" }] },
 		{ code: "const User = class { name = \"\"; };", errors: [{ messageId: "class" }] },
 		{ code: "class User { rename() { this.name = \"\"; } }", errors: [{ messageId: "class" }] },
+		{ code: "class NotFound extends Error {}", errors: [{ messageId: "errorClass" }] },
+		{ code: "class LimitError extends BaseError {}", errors: [{ messageId: "errorClass" }] },
+		{
+			code: "class Boundary extends React.Component {}",
+			errors: [{ messageId: "foreignClass", data: { base: "Component" } }],
+		},
+		{
+			code: "const Panel = class extends HTMLElement {};",
+			errors: [{ messageId: "foreignClass", data: { base: "HTMLElement" } }],
+		},
+		{
+			code: "class Store extends mixin(Base) {}",
+			errors: [{ messageId: "foreignClass", data: { base: "another class" } }],
+		},
 		{ code: "function rename(name: string) { this.name = name; }", errors: [{ messageId: "this" }] },
 		{ code: "const user = { name: \"\", rename() { return this.name; } };", errors: [{ messageId: "this" }] },
 	],

@@ -23,7 +23,7 @@ Read this list instead of writing throwaway files to discover the rules.
 - Objects: `no-conditional-empty-object-spread` rejects `...(cond ? { a } : {})`; build the object, then add the property when present.
 - Indirection: `no-reflect-apply` and `no-reflect-get` reject `Reflect.apply` and `Reflect.get`; call and read directly.
 - Tests: `no-module-mocking` rejects `vi.mock` and `jest.mock`; pass fakes through parameters.
-- Conditions: `strict-boolean-expressions` requires booleans in conditions (`text.length > 0`, `value !== undefined`). `no-unnecessary-condition` rejects checks the types already rule out. `no-unsafe-enum-comparison` rejects comparing an enum with a plain value.
+- Conditions: `strict-boolean-expressions` requires booleans in conditions (`text.length > 0`, `value !== undefined`); an optional boolean such as `context?.hasUI` is allowed. `no-unnecessary-condition` rejects checks the types already rule out. `no-unsafe-enum-comparison` rejects comparing an enum with a plain value.
 - Switches: `switch-exhaustiveness-check` requires a `case` for every union member and rejects `default` on a switch that already covers them; stack `case` labels that share a branch.
 - Promises and errors: `no-floating-promises`, `no-misused-promises`, `await-thenable`, `only-throw-error`, `prefer-promise-reject-errors`, `use-unknown-in-catch-callback-variable`. Await or return every promise, throw and reject only `Error` objects, and type `.catch` parameters `unknown`.
 - Strings and math: `restrict-template-expressions`, `restrict-plus-operands`, `no-base-to-string`. Interpolate and add only strings and numbers; format other values explicitly.
