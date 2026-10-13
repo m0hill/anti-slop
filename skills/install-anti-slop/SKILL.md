@@ -176,10 +176,14 @@ Complete when the operation and target path are established and pre-existing wor
 
    Complete when the generic and type-aware rules and eligible Effect and Gleam rules are registered and existing configuration is preserved.
 
-4. Run the repository's lint command and typecheck. For Vite+, run the repository's full `vp check` command after adding both lint and format ignores. If findings appear in owned project source, report them and fix them only when the user asked for migration/cleanup. Do not suppress rules, weaken rule severity, add unsafe casts, or mechanically launder types to make lint pass.
+4. Offer to add [the agent conventions](references/agent-conventions.md) to the repository's `AGENTS.md` (or the agent instruction file it already uses). Lint messages reach an agent only after it writes the banned pattern; these conventions name the intended replacements up front, including ones no rule can check, such as limits on polling. Add the section verbatim, then adapt names such as `PageSchema` to the repository's own. Do not overwrite existing instructions.
+
+   Complete when the user has accepted or declined the conventions and any accepted section is added.
+
+5. Run the repository's lint command and typecheck. For Vite+, run the repository's full `vp check` command after adding both lint and format ignores. If findings appear in owned project source, report them and fix them only when the user asked for migration/cleanup. Do not suppress rules, weaken rule severity, add unsafe casts, or mechanically launder types to make lint pass.
 
    Complete when checks have run and every failure is resolved or reported with its diagnostics.
 
-5. Record provenance in `UPSTREAM.md` beside the vendored entry point: source repository, exact source commit or recoverable pristine snapshot when available, installed plugin paths, and intentional deviations. Verify that the revision identifies the actual copied assets; a package version or the current upstream HEAD alone is insufficient. If provenance cannot be established, record it as unknown rather than guessing.
+6. Record provenance in `UPSTREAM.md` beside the vendored entry point: source repository, exact source commit or recoverable pristine snapshot when available, installed plugin paths, and intentional deviations. Verify that the revision identifies the actual copied assets; a package version or the current upstream HEAD alone is insufficient. If provenance cannot be established, record it as unknown rather than guessing.
 
    Review the final diff and report the installed path, source identity, dependency/configuration changes, and check results. Complete when the record and report describe the files actually installed and any remaining findings.

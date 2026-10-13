@@ -9,5 +9,6 @@ scripts/dogfood/grade.sh /tmp/dogfood/importer-gleam
 ```
 
 - `plain` enables every generic rule and the type-aware rules. `gleam` adds the Gleam dialect plugin, drops the rules that conflict with it, and exempts `*.ffi.*` boundary files from the Gleam rules. Both arms have Zod installed as the schema library.
+- Each trial gets `AGENTS.md` from the install skill's agent conventions, and the prompt tells the agent to read it.
 - `check.sh` saves each lint run in `.trial/`, so `grade.sh` reports violations by rule across the whole session, not only the agent's own account.
 - `grade.sh` also flags config tampering, suppression comments, and pattern counts such as assertions, `typeof` stand-ins, `null`, and `throw`.

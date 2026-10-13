@@ -53,6 +53,9 @@ if (arm === "gleam") {
 console.log(JSON.stringify(config, null, 2));
 NODE
 
+# Trial projects carry the same agent conventions the install skill offers to add.
+cp "$repo/skills/install-anti-slop/references/agent-conventions.md" "$directory/AGENTS.md"
+
 cat > "$directory/tsconfig.json" <<JSON
 {
   "compilerOptions": {
@@ -83,5 +86,5 @@ chmod +x "$directory/check.sh"
 tsgolint=$(node -p "require('$repo/package.json').devDependencies['oxlint-tsgolint']")
 echo "{ \"type\": \"module\", \"dependencies\": { \"zod\": \"4.6.6\" }, \"devDependencies\": { \"oxlint-tsgolint\": \"$tsgolint\" } }" > "$directory/package.json"
 (cd "$directory" && pnpm install --silent --prefer-offline > /dev/null)
-(cd "$directory" && shasum .oxlintrc.json tsconfig.json check.sh > .trial/checksums)
+(cd "$directory" && shasum .oxlintrc.json tsconfig.json check.sh AGENTS.md > .trial/checksums)
 echo "Created $arm trial at $directory"
