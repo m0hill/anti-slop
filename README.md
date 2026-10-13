@@ -32,13 +32,12 @@ npx skills add dmmulroy/anti-slop --list
 
 Copy `src/` into the target repository, for example at `tools/oxlint/anti-slop/`. If the repository already uses `oxlint`, install `@oxlint/plugins` at exactly the resolved Oxlint version. Otherwise, install the same current version of both packages. Keep both versions exact so upgrades move them together. Also install `oxlint-tsgolint`, which runs Oxlint's type-aware rules.
 
-Register the copied entry point in `oxlint.config.ts`:
+The copy includes ready-made configurations in `configs/`. Extend them from `.oxlintrc.json`:
 
-```ts
-import { defineConfig } from "oxlint";
-
-export default defineConfig({
-  ignorePatterns: [
+```json
+{
+  "extends": ["./tools/oxlint/anti-slop/configs/recommended.json"],
+  "ignorePatterns": [
     ".agent/**",
     ".agents/**",
     ".claude/**",
@@ -50,71 +49,24 @@ export default defineConfig({
     ".pi/**",
     ".roo/**",
     ".windsurf/**",
-    "tools/oxlint/anti-slop/**",
-  ],
-  jsPlugins: [
-    { name: "anti-slop", specifier: "./tools/oxlint/anti-slop/index.ts" },
-  ],
-  rules: {
-    "oxc/no-accumulating-spread": "error",
-    "anti-slop/no-array-filter-map": "error",
-    "anti-slop/no-reduce-accumulator-copy": "error",
-    "anti-slop/no-chained-type-assertions": "error",
-    "anti-slop/no-conditional-empty-object-spread": "error",
-    "anti-slop/no-known-value-widening": "error",
-    "anti-slop/no-module-mocking": "error",
-    "anti-slop/no-object-parameters": "error",
-    "anti-slop/no-reflect-apply": "error",
-    "anti-slop/no-reflect-get": "error",
-    "anti-slop/no-runtime-typeof": "error",
-    "anti-slop/no-shape-in-symbol-names": "error",
-    "anti-slop/no-unknown-parameters": "error",
-    "anti-slop/no-unknown-returns": "error",
-    "anti-slop/no-unknown-type-aliases": "error",
-    "anti-slop/no-unsafe-dictionary-type": "error",
-    "anti-slop/no-widen-then-assert": "error",
-    "anti-slop/require-safety-comment-for-type-assertion": "error"
-  }
-});
+    "tools/oxlint/anti-slop/**"
+  ]
+}
 ```
+
+| Configuration | Contents |
+|---|---|
+| `recommended.json` | every generic anti-slop rule, `oxc/no-accumulating-spread`, and Oxlint's type-aware rules |
+| `gleam.json` | the opt-in Gleam dialect; extend it after `recommended.json` |
+| `effect.json` | the opt-in Effect rules; extend it after `recommended.json` |
+
+Plugin paths inside these files are relative to the files, so they work wherever `src/` is copied. Override individual rules under `rules` in your own configuration; later entries in `extends` and your own `rules` take precedence. Keep the ignore patterns, and add any other project-local agent tooling directories in the repository; do not broadly ignore every dot-directory.
+
+For Vite+, put the same `extends` and `ignorePatterns` under `lint`, and merge the ignore patterns into `fmt.ignorePatterns` so `vp check` does not reformat installed agent assets or the vendored plugin.
 
 ### Type-aware rules
 
-The anti-slop rules read syntax only; Oxlint gives JS plugins no type information. Oxlint's built-in type-aware rules close the gaps syntax cannot see, such as `any` escaping a schema, unhandled promises, and non-exhaustive `switch` statements. Enable them alongside the plugin:
-
-```ts
-export default defineConfig({
-  options: { typeAware: true },
-  rules: {
-    "typescript/await-thenable": "error",
-    "typescript/no-base-to-string": "error",
-    "typescript/no-floating-promises": [
-      "error",
-      { "allowForKnownSafeCalls": [{ "from": "package", "name": ["describe", "it", "suite", "test"], "package": "node:test" }] }
-    ],
-    "typescript/no-misused-promises": "error",
-    "typescript/no-redundant-type-constituents": "error",
-    "typescript/no-unnecessary-condition": "error",
-    "typescript/no-unnecessary-type-assertion": "error",
-    "typescript/no-unsafe-argument": "error",
-    "typescript/no-unsafe-assignment": "error",
-    "typescript/no-unsafe-call": "error",
-    "typescript/no-unsafe-enum-comparison": "error",
-    "typescript/no-unsafe-member-access": "error",
-    "typescript/no-unsafe-return": "error",
-    "typescript/only-throw-error": "error",
-    "typescript/prefer-promise-reject-errors": "error",
-    "typescript/restrict-plus-operands": "error",
-    "typescript/restrict-template-expressions": "error",
-    "typescript/strict-boolean-expressions": "error",
-    "typescript/switch-exhaustiveness-check": [
-      "error",
-      { "allowDefaultCaseForExhaustiveSwitch": false, "requireDefaultForNonUnion": true }
-    ],
-    "typescript/use-unknown-in-catch-callback-variable": "error"
-  }
-});
-```
+The anti-slop rules read syntax only; Oxlint gives JS plugins no type information. `recommended.json` therefore sets `options.typeAware` and enables Oxlint's built-in type-aware rules, which close gaps syntax cannot see, such as `any` escaping a schema, unhandled promises, and non-exhaustive `switch` statements.
 
 `switch-exhaustiveness-check` requires every member of a union to have its own `case`, even when a `default` exists, so adding a variant breaks every `switch` that must handle it:
 
@@ -131,76 +83,25 @@ Its options also reject a `default` on a `switch` that already handles every mem
 
 Type-aware rules read the nearest `tsconfig.json`. Enable `strict`, `exactOptionalPropertyTypes`, and `noUncheckedIndexedAccess` there; without `noUncheckedIndexedAccess`, `no-unnecessary-condition` reports necessary `undefined` checks on indexed reads as always false.
 
-The same `ignorePatterns`, `jsPlugins`, and rules work under `lint` in a Vite+ config. Merge the ignore patterns into Vite+'s `fmt.ignorePatterns` as well so `vp check` does not reformat installed agent assets or the vendored plugin. Preserve existing ignores and add any other project-local agent tooling directories detected in the repository; do not broadly ignore every dot-directory.
-
 ### Agent conventions
 
 Lint messages reach an agent only after it writes a banned pattern. [`agent-conventions.md`](skills/install-anti-slop/references/agent-conventions.md) names the intended replacements up front, including practices no rule can check, such as limits on polling and pagination. Add it to the repository's `AGENTS.md`; the install skill offers to.
 
+### Test files
+
+Tests keep every rule, with one exception in the Gleam dialect. The conventions remove the reasons tests hit the generic rules: fixtures typed with the schema's input type need no `unknown` or `object` parameters, and `node:assert/strict` narrows results without helper functions. The Gleam dialect turns off `no-loops` and `no-mutable-bindings` for `*.test.*` and `*.spec.*` files, because tests repeat actions and fakes such as a clock must change state.
+
 ### Optional Effect rules
 
-Effect-specific rules live in a separate plugin so projects that do not use Effect do not inherit Effect architecture policy. Register the Effect entry point only in repositories that use Effect:
-
-```ts
-export default defineConfig({
-  jsPlugins: [
-    { name: "anti-slop", specifier: "./tools/oxlint/anti-slop/index.ts" },
-    {
-      name: "anti-slop-effect",
-      specifier: "./tools/oxlint/anti-slop/effect/index.ts"
-    }
-  ],
-  rules: {
-    "anti-slop-effect/no-manual-effect-error-tag": "error",
-    "anti-slop-effect/no-manual-tag-comparison": "error",
-    "anti-slop-effect/no-manual-tagged-construction": "error",
-    "anti-slop-effect/no-service-constructor-imports": "error",
-    "anti-slop-effect/prefer-effect-match": "error"
-  }
-});
-```
+Effect-specific rules live in a separate plugin so projects that do not use Effect do not inherit Effect architecture policy. Extend `effect.json` only in repositories that use Effect.
 
 ### Optional Gleam dialect rules
 
-The Gleam plugin restricts TypeScript to a small dialect modeled on [Gleam](https://gleam.run/documentation/conventions-patterns-and-anti-patterns/): no exceptions, `null`, classes, enums, loops, mutable bindings, mutation of shared values, or ambient clocks, randomness, network, and file access. Failure is returned as a `Result`, data is modeled with types and discriminated unions, and behavior lives in module functions. Constraining the language leaves agents fewer ways to write the same thing wrong.
+The Gleam plugin restricts TypeScript to a small dialect modeled on [Gleam](https://gleam.run/documentation/conventions-patterns-and-anti-patterns/): no exceptions, `null`, classes, enums, loops, mutable bindings, mutation of shared values, or ambient clocks, randomness, network, and file access. Failure is returned as a `Result`, data is modeled with types and discriminated unions, and behavior lives in module functions. Constraining the language leaves agents fewer ways to write the same thing wrong. Extend `gleam.json` after `recommended.json`, and add [the dialect's conventions](skills/install-anti-slop/references/agent-conventions-gleam.md) to `AGENTS.md`.
 
-Every rule exempts boundary modules named `*.ffi.ts` (or any `*.ffi.{js,jsx,ts,tsx,mts,cts,mjs,cjs}`), the dialect's equivalent of Gleam's `@external`. Boundary modules wrap throwing, nullable, or class-based foreign APIs and export typed functions that return `Result` values. Use Oxlint `overrides` to relax rules for other paths; the configuration below relaxes two for tests.
+Every rule exempts boundary modules named `*.ffi.ts` (or any `*.ffi.{js,jsx,ts,tsx,mts,cts,mjs,cjs}`), the dialect's equivalent of Gleam's `@external`. Boundary modules wrap throwing, nullable, or class-based foreign APIs and export typed functions that return `Result` values.
 
 Decode untyped input with a schema library. If the project has none, add [Zod](https://zod.dev): `schema.safeParse(value)` already returns a result value instead of throwing, which fits the dialect. Without a schema library, agents satisfy `no-runtime-typeof` with harder-to-read equivalents of `typeof`.
-
-```ts
-export default defineConfig({
-  jsPlugins: [
-    { name: "anti-slop", specifier: "./tools/oxlint/anti-slop/index.ts" },
-    {
-      name: "anti-slop-gleam",
-      specifier: "./tools/oxlint/anti-slop/gleam/index.ts"
-    }
-  ],
-  rules: {
-    "anti-slop-gleam/no-ambient-capabilities": "error",
-    "anti-slop-gleam/no-classes": "error",
-    "anti-slop-gleam/no-enums": "error",
-    "anti-slop-gleam/no-loops": "error",
-    "anti-slop-gleam/no-mutable-bindings": "error",
-    "anti-slop-gleam/no-null": "error",
-    "anti-slop-gleam/no-shared-mutation": "error",
-    "anti-slop-gleam/no-throw": "error",
-    "anti-slop-gleam/no-try-catch": "error"
-  },
-  overrides: [
-    {
-      files: ["**/*.test.*", "**/*.spec.*"],
-      rules: {
-        "anti-slop-gleam/no-loops": "off",
-        "anti-slop-gleam/no-mutable-bindings": "off"
-      }
-    }
-  ]
-});
-```
-
-The override lets tests repeat an action and keep changing state in fakes, such as a fake clock. The rest of the dialect still applies to tests.
 
 The rules expect a project-owned `Result` type, for example:
 
@@ -210,7 +111,7 @@ export type Result<Value, Error> =
   | { readonly ok: false; readonly error: Error };
 ```
 
-Keep the type-aware rules enabled with this plugin: `typescript/switch-exhaustiveness-check` supplies Gleam's exhaustive `case`. `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread` steer reducers toward mutating their accumulator, which `no-shared-mutation` rejects because the accumulator is a parameter; prefer `for...of` or a small `fold` helper over `reduce`.
+`gleam.json` turns off `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread`. They steer reducers toward mutating their accumulator, which `no-shared-mutation` rejects because the accumulator is a parameter; prefer `for...of` or a small `fold` helper over `reduce`. Keep `recommended.json` extended: its `switch-exhaustiveness-check` supplies Gleam's exhaustive `case`.
 
 ## Rules
 

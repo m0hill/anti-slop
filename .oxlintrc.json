@@ -1,50 +1,11 @@
 {
-  "options": {
-    "typeAware": true
-  },
+  // This repository follows its own recommended configuration with two exceptions.
+  // Rule code narrows AST literal values, already typed unions, with `typeof`, which
+  // no-runtime-typeof cannot tell apart from parsing unknown input. Rule options arrive
+  // untyped and the plugin has no schema library dependency to parse them with.
+  "extends": ["./src/configs/recommended.json"],
   "rules": {
-    "oxc/no-accumulating-spread": "error",
-    "typescript/await-thenable": "error",
-    "typescript/no-base-to-string": "error",
-    "typescript/no-floating-promises": [
-      "error",
-      {
-        "allowForKnownSafeCalls": [
-          {
-            "from": "package",
-            "name": [
-              "describe",
-              "it",
-              "suite",
-              "test"
-            ],
-            "package": "node:test"
-          }
-        ]
-      }
-    ],
-    "typescript/no-misused-promises": "error",
-    "typescript/no-redundant-type-constituents": "error",
-    "typescript/no-unnecessary-condition": "error",
-    "typescript/no-unnecessary-type-assertion": "error",
-    "typescript/no-unsafe-argument": "error",
-    "typescript/no-unsafe-assignment": "error",
-    "typescript/no-unsafe-call": "error",
-    "typescript/no-unsafe-enum-comparison": "error",
-    "typescript/no-unsafe-member-access": "error",
-    "typescript/no-unsafe-return": "error",
-    "typescript/only-throw-error": "error",
-    "typescript/prefer-promise-reject-errors": "error",
-    "typescript/restrict-plus-operands": "error",
-    "typescript/restrict-template-expressions": "error",
-    "typescript/strict-boolean-expressions": "error",
-    "typescript/switch-exhaustiveness-check": [
-      "error",
-      {
-        "allowDefaultCaseForExhaustiveSwitch": false,
-        "requireDefaultForNonUnion": true
-      }
-    ],
-    "typescript/use-unknown-in-catch-callback-variable": "error"
+    "anti-slop/no-runtime-typeof": "off",
+    "anti-slop/no-unknown-parameters": "off"
   }
 }

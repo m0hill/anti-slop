@@ -8,55 +8,10 @@ arm=$2
 rm -rf "$directory"
 mkdir -p "$directory/src" "$directory/.trial"
 
-node - "$repo" "$arm" > "$directory/.oxlintrc.json" <<'NODE'
-const [repo, arm] = process.argv.slice(2);
-const generic = [
-  "no-array-filter-map", "no-chained-type-assertions", "no-conditional-empty-object-spread",
-  "no-known-value-widening", "no-module-mocking", "no-object-parameters", "no-reflect-apply",
-  "no-reflect-get", "no-runtime-typeof", "no-shape-in-symbol-names", "no-unknown-parameters",
-  "no-unknown-returns", "no-unknown-type-aliases", "no-unsafe-dictionary-type", "no-widen-then-assert",
-  "require-safety-comment-for-type-assertion",
-  ...(arm === "gleam" ? [] : ["no-reduce-accumulator-copy"]),
-];
-const gleam = [
-  "no-ambient-capabilities", "no-classes", "no-enums", "no-loops", "no-mutable-bindings", "no-null", "no-shared-mutation",
-  "no-throw", "no-try-catch",
-];
-const typeAware = [
-  "await-thenable", "no-base-to-string", "no-floating-promises", "no-misused-promises",
-  "no-redundant-type-constituents", "no-unnecessary-condition", "no-unnecessary-type-assertion",
-  "no-unsafe-argument", "no-unsafe-assignment", "no-unsafe-call", "no-unsafe-enum-comparison",
-  "no-unsafe-member-access", "no-unsafe-return", "only-throw-error", "prefer-promise-reject-errors",
-  "restrict-plus-operands", "restrict-template-expressions", "strict-boolean-expressions",
-  "switch-exhaustiveness-check", "use-unknown-in-catch-callback-variable",
-];
-const config = {
-  options: { typeAware: true },
-  jsPlugins: [{ name: "anti-slop", specifier: `${repo}/src/index.ts` }],
-  rules: Object.fromEntries([
-    ...generic.map((rule) => [`anti-slop/${rule}`, "error"]),
-    ...typeAware.map((rule) => [`typescript/${rule}`, "error"]),
-  ]),
-};
-config.rules["typescript/switch-exhaustiveness-check"] = ["error", {
-  allowDefaultCaseForExhaustiveSwitch: false, requireDefaultForNonUnion: true,
-}];
-// node:test runs describe/it/test without awaiting the promises they return.
-config.rules["typescript/no-floating-promises"] = ["error", {
-  allowForKnownSafeCalls: [{ from: "package", name: ["describe", "it", "suite", "test"], package: "node:test" }],
-}];
-if (arm === "plain") config.rules["oxc/no-accumulating-spread"] = "error";
-if (arm === "gleam") {
-  config.jsPlugins.push({ name: "anti-slop-gleam", specifier: `${repo}/src/gleam/index.ts` });
-  for (const rule of gleam) config.rules[`anti-slop-gleam/${rule}`] = "error";
-  // Test fakes need changing state (a fake clock) and repetition (five failed logins).
-  config.overrides = [{
-    files: ["**/*.test.*", "**/*.spec.*"],
-    rules: { "anti-slop-gleam/no-loops": "off", "anti-slop-gleam/no-mutable-bindings": "off" },
-  }];
-}
-console.log(JSON.stringify(config, null, 2));
-NODE
+# Trials extend the same shipped configs that installs use, so results describe what users get.
+configs="\"$repo/src/configs/recommended.json\""
+[ "$arm" = gleam ] && configs="$configs, \"$repo/src/configs/gleam.json\""
+echo "{ \"extends\": [$configs] }" > "$directory/.oxlintrc.json"
 
 # Trial projects carry the same agent conventions the install skill offers to add.
 cp "$repo/skills/install-anti-slop/references/agent-conventions.md" "$directory/AGENTS.md"
