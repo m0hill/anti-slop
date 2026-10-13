@@ -1,14 +1,16 @@
 # Dogfood trials
 
-Give fresh coding agents the same task under different rule sets, then compare their code and lint history.
+Give fresh coding agents the same tasks under both rule sets, several times each, then compare their code and lint history.
 
 ```sh
-scripts/dogfood/setup.sh /tmp/dogfood/importer-gleam gleam   # or: plain
-# Run an agent with prompt.md, substituting {{directory}} and the contents of tasks/<task>.md for {{task}}.
-scripts/dogfood/grade.sh /tmp/dogfood/importer-gleam
+scripts/dogfood/run.sh 2026-10-baseline 3 importer library http-client workflow poller sessions
+node scripts/dogfood/report.mjs /tmp/dogfood/2026-10-baseline --out scripts/dogfood/results/2026-10-baseline.md
 ```
 
-- `plain` enables every generic rule and the type-aware rules. `gleam` adds the Gleam dialect plugin, drops the rules that conflict with it, and exempts `*.ffi.*` boundary files from the Gleam rules. Both arms have Zod installed as the schema library.
-- Each trial gets `AGENTS.md` from the install skill's agent conventions, and the prompt tells the agent to read it.
-- `check.sh` saves each lint run in `.trial/`, so `grade.sh` reports violations by rule across the whole session, not only the agent's own account.
-- `grade.sh` also flags config tampering, suppression comments, and pattern counts such as assertions, `typeof` stand-ins, `null`, and `throw`.
+`run.sh` creates one trial project per task, rule set, and run, launches `claude -p` in each (Haiku by default; set `DOGFOOD_MODEL`), and prints the report. Commit the report under `results/` so later rule changes can be compared against it.
+
+- Trials extend the shipped `src/configs/recommended.json`, and the Gleam arm also `gleam.json`, so they test exactly what installs get. Both arms have Zod installed as the schema library.
+- Each trial gets `AGENTS.md` from the install skill's agent conventions, plus the Gleam conventions in the Gleam arm, and the prompt tells the agent to read it.
+- Agents run without user settings, skills, or MCP servers, and their shell is limited to `./check.sh` and deleting files in `src/`. `check.sh` saves each lint run in `.trial/`, so the report counts violations across the whole session, not only the agent's own account.
+- The report also shows config tampering, suppression comments, pattern counts such as assertions, `typeof` stand-ins, `null`, and `throw`, and cost.
+- For a single trial, run `setup.sh <directory> <plain|gleam>` and give an agent `prompt.md` with `{{directory}}` and the task substituted.
