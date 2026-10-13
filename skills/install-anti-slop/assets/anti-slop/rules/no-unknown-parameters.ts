@@ -52,13 +52,30 @@ function isTypePredicateSubject(owner: ParameterOwner, parameterName: string): b
   );
 }
 
-/** Disallow unknown inputs except explicitly named error-cause enrichment. */
+/** Return the argument index that receives a rejection reason for `.catch(fn)` and `.then(ok, fn)`. */
+function rejectionHandlerIndex(callee: ESTree.Expression | ESTree.Super): number | undefined {
+  if (callee.type !== "MemberExpression" || callee.computed || callee.property.type !== "Identifier") return undefined;
+  if (callee.property.name === "catch") return 0;
+  return callee.property.name === "then" ? 1 : undefined;
+}
+
+/** Return whether a parameter receives a promise rejection reason, which has no earlier boundary to parse it at. */
+function isRejectionReason(owner: ParameterOwner, parameterIndex: number): boolean {
+  if (parameterIndex !== 0) return false;
+  if (owner.type !== "ArrowFunctionExpression" && owner.type !== "FunctionExpression") return false;
+  const call = owner.parent;
+  if (call?.type !== "CallExpression") return false;
+  const index = rejectionHandlerIndex(call.callee);
+  return index !== undefined && call.arguments[index] === owner;
+}
+
+/** Disallow unknown inputs except error causes, promise rejection reasons, and type-predicate subjects. */
 export const noUnknownParametersRule = defineRule({
   meta: {
     type: "problem",
     docs: {
       description:
-        "Disallow explicitly unknown function parameters, including unknown members of object parameters, except `cause` and type-predicate subjects; decode unknown input at its I/O boundary instead.",
+        "Disallow explicitly unknown function parameters, including unknown members of object parameters, except `cause`, promise rejection reasons, and type-predicate subjects; decode unknown input at its I/O boundary instead.",
     },
     messages: {
       unknownParameter:
@@ -67,9 +84,10 @@ export const noUnknownParametersRule = defineRule({
   },
   createOnce(context) {
     const checkParameters = (node: ParameterOwner) => {
-      for (const parameter of node.params) {
+      for (const [index, parameter] of node.params.entries()) {
         const annotation = functionParameterTypeAnnotation(parameter);
         if (annotation === null || annotation === undefined) continue;
+        if (isRejectionReason(node, index)) continue;
         const type = annotation.typeAnnotation;
         if (!containsUnknownType(type) && !wrapsUnknownType(type)) continue;
         const name = functionParameterBindingName(parameter, context.sourceCode);

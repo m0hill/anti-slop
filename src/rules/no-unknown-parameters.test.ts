@@ -19,8 +19,16 @@ tester.run("anti-slop/no-unknown-parameters", noUnknownParametersRule, {
 		"function fail(options: { cause: unknown }): void {}",
 		"function fail(options: Readonly<{ message: string; cause?: unknown }>): void {}",
 		"function parse(input: Readonly<{ value: string }>): void {}",
+		"load().catch((error: unknown) => report(error));",
+		"load().catch(function (error: unknown) { report(error); });",
+		"load().then((value: string) => value, (error: unknown) => report(error));",
+		"load()?.catch((error: unknown) => report(error));",
 	],
 	invalid: [
+		{ code: "load().then((value: unknown) => value);", errors: [error] },
+		{ code: "load().catch((error: unknown, extra: unknown) => error);", errors: [{ ...error, data: { parameter: "extra" } }] },
+		{ code: "load().catch(handler((error: unknown) => error));", errors: [error] },
+		{ code: "items.map((item: unknown) => item);", errors: [error] },
 		{ code: "function parse(value: unknown): void {}", errors: [error] },
 		{ code: "function parse(value: string | unknown): void {}", errors: [error] },
 		{

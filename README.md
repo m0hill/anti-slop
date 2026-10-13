@@ -159,7 +159,7 @@ Pair the plugin with `strict`, `exactOptionalPropertyTypes`, and `noUncheckedInd
 - `no-reflect-get` — rejects global `Reflect.get` in favor of typed property access or boundary parsing.
 - `no-runtime-typeof` — requires boundary parsing instead of ad hoc `typeof` narrowing, including disguised equivalents such as `String(value) === value`, `Object(value) === value`, and `value instanceof Object`. Existence probes against the string `"undefined"` are allowed, and type predicates can be enabled explicitly.
 - `no-shape-in-symbol-names` — rejects the case-insensitive substring `shape` in locally owned symbol names while allowing static member names such as Zod's `schema.shape` that cannot be renamed locally.
-- `no-unknown-parameters` — rejects `unknown` and unions containing it on function inputs, including members of object parameters wrapped in `Readonly`, `Partial`, or `Required`, except the explicit `cause` convention and the exact subject of a type predicate.
+- `no-unknown-parameters` — rejects `unknown` and unions containing it on function inputs, including members of object parameters wrapped in `Readonly`, `Partial`, or `Required`, except the explicit `cause` convention, the rejection reason of an inline `.catch(...)` or `.then(..., ...)` handler, and the exact subject of a type predicate.
 - `no-unknown-returns` — rejects explicit function contracts that resolve to `unknown`, `Promise<unknown>`, or `PromiseLike<unknown>`, including scoped and transparent generic aliases.
 - `no-unknown-type-aliases` — rejects scoped and transparent generic aliases whose resolved type is `unknown`.
 - `no-unsafe-dictionary-type` — rejects dictionary value contracts based on `unknown`, `any`, `object`, `{}`, and semantic equivalents. Generic constraints such as `T extends Record<string, unknown>` are allowed.
@@ -449,7 +449,12 @@ function handle(input: unknown) {}
 ```
 
 A type predicate may accept `unknown` for the parameter it narrows; other `unknown`
-parameters on the same function remain rejected.
+parameters on the same function remain rejected. An inline promise rejection handler
+may accept `unknown` for its reason, which has no earlier boundary to parse it at:
+
+```ts
+load().catch((error: unknown) => report(error));
+```
 
 ### `no-unknown-returns`
 
