@@ -164,7 +164,7 @@ export default defineConfig({
 
 The Gleam plugin restricts TypeScript to a small dialect modeled on [Gleam](https://gleam.run/documentation/conventions-patterns-and-anti-patterns/): no exceptions, `null`, classes, enums, loops, mutable bindings, mutation of shared values, or ambient clocks, randomness, network, and file access. Failure is returned as a `Result`, data is modeled with types and discriminated unions, and behavior lives in module functions. Constraining the language leaves agents fewer ways to write the same thing wrong.
 
-Every rule exempts boundary modules named `*.ffi.ts` (or any `*.ffi.{js,jsx,ts,tsx,mts,cts,mjs,cjs}`), the dialect's equivalent of Gleam's `@external`. Boundary modules wrap throwing, nullable, or class-based foreign APIs and export typed functions that return `Result` values. Use Oxlint `overrides` to relax rules for other paths, such as tests.
+Every rule exempts boundary modules named `*.ffi.ts` (or any `*.ffi.{js,jsx,ts,tsx,mts,cts,mjs,cjs}`), the dialect's equivalent of Gleam's `@external`. Boundary modules wrap throwing, nullable, or class-based foreign APIs and export typed functions that return `Result` values. Use Oxlint `overrides` to relax rules for other paths; the configuration below relaxes two for tests.
 
 Decode untyped input with a schema library. If the project has none, add [Zod](https://zod.dev): `schema.safeParse(value)` already returns a result value instead of throwing, which fits the dialect. Without a schema library, agents satisfy `no-runtime-typeof` with harder-to-read equivalents of `typeof`.
 
@@ -187,9 +187,20 @@ export default defineConfig({
     "anti-slop-gleam/no-shared-mutation": "error",
     "anti-slop-gleam/no-throw": "error",
     "anti-slop-gleam/no-try-catch": "error"
-  }
+  },
+  overrides: [
+    {
+      files: ["**/*.test.*", "**/*.spec.*"],
+      rules: {
+        "anti-slop-gleam/no-loops": "off",
+        "anti-slop-gleam/no-mutable-bindings": "off"
+      }
+    }
+  ]
 });
 ```
+
+The override lets tests repeat an action and keep changing state in fakes, such as a fake clock. The rest of the dialect still applies to tests.
 
 The rules expect a project-owned `Result` type, for example:
 

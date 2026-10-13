@@ -171,9 +171,20 @@ Complete when the operation and target path are established and pre-existing wor
      "anti-slop-gleam/no-throw": "error",
      "anti-slop-gleam/no-try-catch": "error",
    },
+   overrides: [
+     {
+       files: ["**/*.test.*", "**/*.spec.*"],
+       rules: {
+         "anti-slop-gleam/no-loops": "off",
+         "anti-slop-gleam/no-mutable-bindings": "off",
+       },
+     },
+   ],
    ```
 
-   The Gleam rules skip `*.ffi.*` boundary modules. Boundary modules decode untyped input with the repository's schema library. Ask before moving code into boundary modules or adding overrides for other paths. When the Gleam plugin is enabled, ask whether to disable `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread`, which steer reducers toward mutation.
+   The override lets tests repeat actions and keep changing state in fakes such as a fake clock. Match the files pattern to the repository's test naming, and merge it with existing overrides.
+
+   The Gleam rules skip `*.ffi.*` boundary modules. Boundary modules decode untyped input with the repository's schema library. Ask before moving code into boundary modules or adding overrides for paths other than tests. When the Gleam plugin is enabled, ask whether to disable `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread`, which steer reducers toward mutation.
 
    Complete when the generic and type-aware rules and eligible Effect and Gleam rules are registered and existing configuration is preserved.
 

@@ -49,6 +49,11 @@ if (arm === "plain") config.rules["oxc/no-accumulating-spread"] = "error";
 if (arm === "gleam") {
   config.jsPlugins.push({ name: "anti-slop-gleam", specifier: `${repo}/src/gleam/index.ts` });
   for (const rule of gleam) config.rules[`anti-slop-gleam/${rule}`] = "error";
+  // Test fakes need changing state (a fake clock) and repetition (five failed logins).
+  config.overrides = [{
+    files: ["**/*.test.*", "**/*.spec.*"],
+    rules: { "anti-slop-gleam/no-loops": "off", "anti-slop-gleam/no-mutable-bindings": "off" },
+  }];
 }
 console.log(JSON.stringify(config, null, 2));
 NODE
