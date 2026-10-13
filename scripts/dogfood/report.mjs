@@ -16,7 +16,7 @@ const patterns = {
   throw: /\bthrow /g,
   try: /\btry \{/g,
   null: /\bnull\b/g,
-  "typeof stand-ins": /String\(.*\) ===|instanceof Object|Object\(.*\) ===|constructor === |getPrototypeOf\(/g,
+  "typeof stand-ins": /(?<![\w.])(?:String|Number|Boolean|Object)\([^)]*\) ===|instanceof Object\b|constructor === |getPrototypeOf\(/g,
 };
 
 function sourceFiles(directory) {
@@ -44,6 +44,14 @@ function passesCheck(directory) {
 }
 
 const PROBE = /probe|scratch/i;
+const RULE = String.raw`(?:anti-slop[a-z-]*|oxc|typescript)\([a-z-]+\)`;
+// Oxlint prints one line per diagnostic without a terminal, and a block with `--format default`.
+const ONE_LINE = new RegExp(String.raw`(?<file>src\/\S+?\.ts):\d+:\d+: error (?<rule>${RULE})`, "g");
+const BLOCK = new RegExp(String.raw`x (?<rule>${RULE}):[^\n]*\n\s*,-\[(?<file>src\/\S+?\.ts):\d+:\d+\]`, "g");
+
+function diagnostics(text) {
+  return [...text.matchAll(ONE_LINE), ...text.matchAll(BLOCK)].map((match) => match.groups);
+}
 
 function measure(directory) {
   const logs = lintLogs(directory);
@@ -54,7 +62,7 @@ function measure(directory) {
   for (const log of logs) {
     const text = readFileSync(join(directory, ".trial", log), "utf8");
     // Count only violations in files that are part of the finished task, not throwaway probes.
-    for (const [, file, rule] of text.matchAll(/(src\/\S+?\.ts):\d+:\d+: error ((?:anti-slop[a-z-]*|oxc|typescript)\([a-z-]+\))/g)) {
+    for (const { file, rule } of diagnostics(text)) {
       if (!taskFiles.has(file)) {
         probed = true;
         continue;
@@ -63,10 +71,10 @@ function measure(directory) {
     }
   }
   const source = files.filter((path) => !path.includes(".test.")).map((path) => readFileSync(path, "utf8")).join("\n");
-  // The transcript records every tool call; its last line is the session result.
-  const transcriptPath = join(directory, ".trial", "transcript.jsonl");
-  const lines = existsSync(transcriptPath) ? readFileSync(transcriptPath, "utf8").trim().split("\n") : [];
-  const transcript = lines.length > 0 ? JSON.parse(lines.at(-1)) : {};
+  // A transcript records every tool call and ends with the session result; older rounds kept only the result.
+  const transcriptPath = ["transcript.jsonl", "transcript.json"].map((name) => join(directory, ".trial", name)).find(existsSync);
+  const lines = transcriptPath === undefined ? [] : readFileSync(transcriptPath, "utf8").trim().split("\n");
+  const transcript = lines.length > 0 && lines.at(-1) !== "" ? JSON.parse(lines.at(-1)) : {};
   let untouched = true;
   try {
     execFileSync("shasum", ["-c", ".trial/checksums"], { cwd: directory, stdio: "ignore" });
