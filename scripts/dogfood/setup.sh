@@ -35,7 +35,7 @@ cat > "$directory/check.sh" <<SH
 cd "\$(dirname "\$0")"
 run=\$(( \$(ls .trial | grep -c '^lint-') + 1 ))
 echo "== lint"
-$repo/node_modules/.bin/oxlint -c .oxlintrc.json "\$@" src > ".trial/lint-\$run.txt" 2>&1
+$repo/node_modules/.bin/oxlint -c .oxlintrc.json --format default "\$@" src > ".trial/lint-\$run.txt" 2>&1
 status=\$?
 cat ".trial/lint-\$run.txt"
 [ \$status -eq 0 ] || exit 1

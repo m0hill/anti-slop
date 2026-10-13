@@ -81,6 +81,8 @@ Its options also reject a `default` on a `switch` that already handles every mem
 
 `node:test` runs `describe`, `it`, and `test` without awaiting their returned promises, so `no-floating-promises` allows those calls; add the equivalent entry for another test runner whose registration functions return promises.
 
+Run Oxlint with `--format default` in the repository's lint script. Without a terminal, Oxlint prints nothing when lint passes, so an agent cannot tell a clean run from one that checked nothing; in trials, agents wrote throwaway rule-breaking files to find out.
+
 Type-aware rules read the nearest `tsconfig.json`. Enable `strict`, `exactOptionalPropertyTypes`, and `noUncheckedIndexedAccess` there; without `noUncheckedIndexedAccess`, `no-unnecessary-condition` reports necessary `undefined` checks on indexed reads as always false.
 
 ### Agent conventions

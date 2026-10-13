@@ -63,6 +63,8 @@ Complete when the operation and target path are established and pre-existing wor
 
    `no-runtime-typeof` and `no-unknown-parameters` assume a runtime schema library such as Zod, Valibot, ArkType, or Effect Schema. If the repository has none, recommend adding Zod and ask before changing dependencies. Without one, agents work around these rules with harder-to-read equivalents of `typeof`.
 
+   Make the repository's lint script pass `--format default` to `oxlint`. Without a terminal, Oxlint prints nothing when lint passes, so agents cannot tell a clean run from one that checked nothing and write throwaway rule-breaking files to find out.
+
    `recommended.json` enables type-aware linting, which reads the nearest `tsconfig.json`. If it lacks `strict`, `exactOptionalPropertyTypes`, or `noUncheckedIndexedAccess`, recommend enabling them and ask before changing it; without `noUncheckedIndexedAccess`, `no-unnecessary-condition` reports necessary `undefined` checks on indexed reads. Its `no-floating-promises` option allows `node:test` registration calls; if the repository uses another test runner whose `describe` or `it` returns a promise, override the rule with the equivalent entry. Keep a rule the user asks to defer at `"warn"` rather than dropping it.
 
    For `no-array-filter-map`, prefer lazy `.values().filter(...).map(...).toArray()` pipelines only when the target runtime supports iterator helpers; otherwise use an appropriate single `flatMap` or locally mutating reducer. Review callback order, indexes, sparse arrays, `thisArg`, and filtering semantics rather than mechanically rewriting chains. Unknown receiver types are deliberately not inferred by this AST/scope rule.
