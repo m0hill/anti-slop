@@ -33,12 +33,12 @@ for task in "$@"; do
 done > "$root/trials.txt"
 
 echo "Running $(wc -l < "$root/trials.txt" | tr -d ' ') trials with $model"
-# Each agent sees only the trial directory: no user settings, skills, or MCP servers, and its
-# shell is limited to ./check.sh so every lint run is recorded.
+# Agents run without user settings, skills, or MCP servers. Their shell is unrestricted, as in a
+# real project: restricting it made agents leave behind lint-probe files they could not delete.
 xargs -P "${DOGFOOD_PARALLEL:-6}" -I {} sh -c '
   cd "$1" && claude -p --model "$2" --output-format json --no-session-persistence \
     --setting-sources project,local --disable-slash-commands --strict-mcp-config \
-    --allowedTools Read Write Edit Glob Grep "Bash(./check.sh:*)" "Bash(rm src/:*)" \
+    --allowedTools Read Write Edit Glob Grep Bash \
     < .trial/prompt.md > .trial/transcript.json 2> .trial/stderr.txt
   echo "done $1"
 ' _ {} "$model" < "$root/trials.txt"

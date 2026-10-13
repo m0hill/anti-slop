@@ -43,16 +43,25 @@ function passesCheck(directory) {
   }
 }
 
+const PROBE = /probe|scratch/i;
+
 function measure(directory) {
   const logs = lintLogs(directory);
+  const files = sourceFiles(join(directory, "src")).filter((path) => !PROBE.test(path));
+  const taskFiles = new Set(files.map((path) => path.slice(directory.length + 1)));
   const violations = {};
+  let probed = false;
   for (const log of logs) {
     const text = readFileSync(join(directory, ".trial", log), "utf8");
-    for (const [rule] of text.matchAll(/(?:anti-slop[a-z-]*|oxc|typescript)\([a-z-]+\)/g)) {
+    // Count only violations in files that are part of the finished task, not throwaway probes.
+    for (const [, file, rule] of text.matchAll(/(src\/\S+?\.ts):\d+:\d+: error ((?:anti-slop[a-z-]*|oxc|typescript)\([a-z-]+\))/g)) {
+      if (!taskFiles.has(file)) {
+        probed = true;
+        continue;
+      }
       violations[rule] = (violations[rule] ?? 0) + 1;
     }
   }
-  const files = sourceFiles(join(directory, "src"));
   const source = files.filter((path) => !path.includes(".test.")).map((path) => readFileSync(path, "utf8")).join("\n");
   const transcriptPath = join(directory, ".trial", "transcript.json");
   const transcript = existsSync(transcriptPath) ? JSON.parse(readFileSync(transcriptPath, "utf8") || "{}") : {};
@@ -64,6 +73,7 @@ function measure(directory) {
   }
   return {
     finished: transcript.is_error === false,
+    probed,
     passes: passesCheck(directory),
     untouched,
     lintRuns: logs.length,
@@ -94,7 +104,7 @@ const format = (value) => (Number.isInteger(value) ? String(value) : value.toFix
 const ratio = (items, test) => `${items.filter(test).length}/${items.length}`;
 const total = (items) => items.map((item) => Object.values(item.violations).reduce((sum, n) => sum + n, 0));
 
-const header = ["task", "rules", "finished", "check passes", "config untouched", "lint runs", "violations", "source lines", "ffi files", ...Object.keys(patterns), "cost (USD)"];
+const header = ["task", "rules", "finished", "check passes", "config untouched", "probed", "lint runs", "violations", "source lines", "ffi files", ...Object.keys(patterns), "cost (USD)"];
 const rows = [...groups].sort(([a], [b]) => a.localeCompare(b)).map(([key, items]) => {
   const [task, arm] = key.split("\t");
   return [
@@ -103,6 +113,7 @@ const rows = [...groups].sort(([a], [b]) => a.localeCompare(b)).map(([key, items
     ratio(items, (item) => item.finished),
     ratio(items, (item) => item.passes),
     ratio(items, (item) => item.untouched),
+    ratio(items, (item) => item.probed),
     format(mean(items.map((item) => item.lintRuns))),
     format(mean(total(items))),
     format(mean(items.map((item) => item.lines))),
