@@ -32,6 +32,7 @@ Complete when the operation and target path are established and pre-existing wor
    - If the repository already depends on `oxlint`, read its installed version from the package manager or lockfile and install `@oxlint/plugins` at exactly that version. Pin it exactly rather than by range so future upgrades move both packages together.
    - Only when the repository has no `oxlint` dependency, query `npm view oxlint version` and `npm view @oxlint/plugins version`, then install the same current version of both packages.
    - `oxlint` is a development dependency. The copied source imports `@oxlint/plugins`, so install it as a development dependency for a local-only plugin.
+   - Install `oxlint-tsgolint` as an exactly pinned development dependency; it runs the type-aware rules in step 3. Query `npm view oxlint-tsgolint version` unless the repository already depends on it.
    - Do not replace the package manager or rewrite unrelated dependency ranges.
 
    Complete when matching compatible versions are installed and unrelated dependency ranges are preserved.
@@ -89,6 +90,35 @@ Complete when the operation and target path are established and pre-existing wor
    }
    ```
 
+   Enable type-aware linting with the generic rules. The anti-slop rules read syntax only, and these built-in rules catch what syntax cannot: `any` escaping a schema, unhandled promises, and non-exhaustive `switch` statements. Set `options.typeAware` to `true` (under `lint` in Vite+) and enable at `"error"`:
+
+   ```json
+   {
+     "typescript/await-thenable": "error",
+     "typescript/no-base-to-string": "error",
+     "typescript/no-floating-promises": "error",
+     "typescript/no-misused-promises": "error",
+     "typescript/no-redundant-type-constituents": "error",
+     "typescript/no-unnecessary-condition": "error",
+     "typescript/no-unnecessary-type-assertion": "error",
+     "typescript/no-unsafe-argument": "error",
+     "typescript/no-unsafe-assignment": "error",
+     "typescript/no-unsafe-call": "error",
+     "typescript/no-unsafe-enum-comparison": "error",
+     "typescript/no-unsafe-member-access": "error",
+     "typescript/no-unsafe-return": "error",
+     "typescript/only-throw-error": "error",
+     "typescript/prefer-promise-reject-errors": "error",
+     "typescript/restrict-plus-operands": "error",
+     "typescript/restrict-template-expressions": "error",
+     "typescript/strict-boolean-expressions": "error",
+     "typescript/switch-exhaustiveness-check": "error",
+     "typescript/use-unknown-in-catch-callback-variable": "error"
+   }
+   ```
+
+   Type-aware rules read the nearest `tsconfig.json`. If it lacks `strict`, `exactOptionalPropertyTypes`, or `noUncheckedIndexedAccess`, recommend enabling them and ask before changing it; without `noUncheckedIndexedAccess`, `no-unnecessary-condition` reports necessary `undefined` checks on indexed reads. Keep a rule the user asks to defer at `"warn"` rather than dropping it.
+
    For `no-array-filter-map`, prefer lazy `.values().filter(...).map(...).toArray()` pipelines only when the target runtime supports iterator helpers; otherwise use an appropriate single `flatMap` or locally mutating reducer. Review callback order, indexes, sparse arrays, `thisArg`, and filtering semantics rather than mechanically rewriting chains. Unknown receiver types are deliberately not inferred by this AST/scope rule.
 
    Pair `no-reduce-accumulator-copy` with native `oxc/no-accumulating-spread`: the custom rule catches supported non-spread copies such as `Object.assign({}, acc, item)`, `Array.from(acc)`, and array accumulator `concat`/`slice` calls. Mutating a fresh local accumulator is allowed; copying individual input items is also allowed. Named callbacks, indirect helpers, and nested accumulator properties are not fully analyzed, so do not claim all quadratic reducers are ruled out.
@@ -137,7 +167,7 @@ Complete when the operation and target path are established and pre-existing wor
 
    The Gleam rules skip `*.ffi.*` boundary modules. Boundary modules decode untyped input with the repository's schema library. Ask before moving code into boundary modules or adding overrides for other paths. When the Gleam plugin is enabled, ask whether to disable `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread`, which steer reducers toward mutation.
 
-   Complete when the generic rules and eligible Effect and Gleam rules are registered and existing configuration is preserved.
+   Complete when the generic and type-aware rules and eligible Effect and Gleam rules are registered and existing configuration is preserved.
 
 4. Run the repository's lint command and typecheck. For Vite+, run the repository's full `vp check` command after adding both lint and format ignores. If findings appear in owned project source, report them and fix them only when the user asked for migration/cleanup. Do not suppress rules, weaken rule severity, add unsafe casts, or mechanically launder types to make lint pass.
 

@@ -7,7 +7,7 @@ echo "## $1"
 runs=$(ls .trial | grep -c '^lint-')
 echo "lint runs by agent: $runs (lower bound: direct oxlint calls are not recorded)"
 echo "violations by rule across agent runs:"
-cat .trial/lint-*.txt 2>/dev/null | grep -oE '(anti-slop[a-z-]*|oxc)\([a-z-]+\)' | sort | uniq -c | sort -rn | sed 's/^/  /'
+cat .trial/lint-*.txt 2>/dev/null | grep -oE '(anti-slop[a-z-]*|oxc|typescript)\([a-z-]+\)' | sort | uniq -c | sort -rn | sed 's/^/  /'
 if shasum -c .trial/checksums > /dev/null 2>&1; then echo "config: untouched"; else echo "config: TAMPERED"; fi
 if ./check.sh > /dev/null 2>&1; then echo "check: pass"; else echo "check: FAIL"; fi
 rm -f ".trial/lint-$((runs + 1)).txt"

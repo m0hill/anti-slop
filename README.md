@@ -30,7 +30,7 @@ npx skills add dmmulroy/anti-slop --list
 
 ## Manual local installation
 
-Copy `src/` into the target repository, for example at `tools/oxlint/anti-slop/`. If the repository already uses `oxlint`, install `@oxlint/plugins` at exactly the resolved Oxlint version. Otherwise, install the same current version of both packages. Keep both versions exact so upgrades move them together.
+Copy `src/` into the target repository, for example at `tools/oxlint/anti-slop/`. If the repository already uses `oxlint`, install `@oxlint/plugins` at exactly the resolved Oxlint version. Otherwise, install the same current version of both packages. Keep both versions exact so upgrades move them together. Also install `oxlint-tsgolint`, which runs Oxlint's type-aware rules.
 
 Register the copied entry point in `oxlint.config.ts`:
 
@@ -77,6 +77,40 @@ export default defineConfig({
   }
 });
 ```
+
+### Type-aware rules
+
+The anti-slop rules read syntax only; Oxlint gives JS plugins no type information. Oxlint's built-in type-aware rules close the gaps syntax cannot see, such as `any` escaping a schema, unhandled promises, and non-exhaustive `switch` statements. Enable them alongside the plugin:
+
+```ts
+export default defineConfig({
+  options: { typeAware: true },
+  rules: {
+    "typescript/await-thenable": "error",
+    "typescript/no-base-to-string": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/no-redundant-type-constituents": "error",
+    "typescript/no-unnecessary-condition": "error",
+    "typescript/no-unnecessary-type-assertion": "error",
+    "typescript/no-unsafe-argument": "error",
+    "typescript/no-unsafe-assignment": "error",
+    "typescript/no-unsafe-call": "error",
+    "typescript/no-unsafe-enum-comparison": "error",
+    "typescript/no-unsafe-member-access": "error",
+    "typescript/no-unsafe-return": "error",
+    "typescript/only-throw-error": "error",
+    "typescript/prefer-promise-reject-errors": "error",
+    "typescript/restrict-plus-operands": "error",
+    "typescript/restrict-template-expressions": "error",
+    "typescript/strict-boolean-expressions": "error",
+    "typescript/switch-exhaustiveness-check": "error",
+    "typescript/use-unknown-in-catch-callback-variable": "error"
+  }
+});
+```
+
+Type-aware rules read the nearest `tsconfig.json`. Enable `strict`, `exactOptionalPropertyTypes`, and `noUncheckedIndexedAccess` there; without `noUncheckedIndexedAccess`, `no-unnecessary-condition` reports necessary `undefined` checks on indexed reads as always false.
 
 The same `ignorePatterns`, `jsPlugins`, and rules work under `lint` in a Vite+ config. Merge the ignore patterns into Vite+'s `fmt.ignorePatterns` as well so `vp check` does not reformat installed agent assets or the vendored plugin. Preserve existing ignores and add any other project-local agent tooling directories detected in the repository; do not broadly ignore every dot-directory.
 
@@ -142,7 +176,7 @@ export type Result<Value, Error> =
   | { readonly ok: false; readonly error: Error };
 ```
 
-Pair the plugin with `strict`, `exactOptionalPropertyTypes`, and `noUncheckedIndexedAccess` in `tsconfig.json`. Syntax rules cannot prove a `switch` is exhaustive, so also enable Oxlint's type-aware `typescript/switch-exhaustiveness-check` when type-aware linting is available. `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread` steer reducers toward mutating their accumulator, which `no-shared-mutation` rejects because the accumulator is a parameter; prefer `for...of` or a small `fold` helper over `reduce`.
+Syntax rules cannot prove a `switch` is exhaustive; the type-aware `typescript/switch-exhaustiveness-check` does, so keep the type-aware rules enabled with this plugin. `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread` steer reducers toward mutating their accumulator, which `no-shared-mutation` rejects because the accumulator is a parameter; prefer `for...of` or a small `fold` helper over `reduce`.
 
 ## Rules
 

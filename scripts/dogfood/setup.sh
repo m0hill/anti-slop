@@ -22,9 +22,21 @@ const gleam = [
   "no-classes", "no-enums", "no-loops", "no-mutable-bindings", "no-null", "no-shared-mutation",
   "no-switch-catch-all", "no-throw", "no-try-catch",
 ];
+const typeAware = [
+  "await-thenable", "no-base-to-string", "no-floating-promises", "no-misused-promises",
+  "no-redundant-type-constituents", "no-unnecessary-condition", "no-unnecessary-type-assertion",
+  "no-unsafe-argument", "no-unsafe-assignment", "no-unsafe-call", "no-unsafe-enum-comparison",
+  "no-unsafe-member-access", "no-unsafe-return", "only-throw-error", "prefer-promise-reject-errors",
+  "restrict-plus-operands", "restrict-template-expressions", "strict-boolean-expressions",
+  "switch-exhaustiveness-check", "use-unknown-in-catch-callback-variable",
+];
 const config = {
+  options: { typeAware: true },
   jsPlugins: [{ name: "anti-slop", specifier: `${repo}/src/index.ts` }],
-  rules: Object.fromEntries(generic.map((rule) => [`anti-slop/${rule}`, "error"])),
+  rules: Object.fromEntries([
+    ...generic.map((rule) => [`anti-slop/${rule}`, "error"]),
+    ...typeAware.map((rule) => [`typescript/${rule}`, "error"]),
+  ]),
 };
 if (arm === "plain") config.rules["oxc/no-accumulating-spread"] = "error";
 if (arm === "gleam") {
@@ -60,8 +72,9 @@ echo "== typecheck"; $repo/node_modules/.bin/tsc -p tsconfig.json || exit 1
 echo "== test"; node --test 'src/**/*.test.ts' || exit 1
 SH
 chmod +x "$directory/check.sh"
-# Zod stands in for the schema library a real project would have.
-echo '{ "type": "module", "dependencies": { "zod": "4.6.6" } }' > "$directory/package.json"
+# Zod stands in for the schema library a real project would have; oxlint-tsgolint runs the type-aware rules.
+tsgolint=$(node -p "require('$repo/package.json').devDependencies['oxlint-tsgolint']")
+echo "{ \"type\": \"module\", \"dependencies\": { \"zod\": \"4.6.6\" }, \"devDependencies\": { \"oxlint-tsgolint\": \"$tsgolint\" } }" > "$directory/package.json"
 (cd "$directory" && pnpm install --silent --prefer-offline > /dev/null)
 (cd "$directory" && shasum .oxlintrc.json tsconfig.json check.sh > .trial/checksums)
 echo "Created $arm trial at $directory"
