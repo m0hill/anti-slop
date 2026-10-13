@@ -13,7 +13,7 @@ export const noNullRule = defineRule({
 		},
 		messages: {
 			null:
-				"Do not use `null`. Model absence as `undefined` in an explicit union, or as a Result error when absence is a failure. Convert foreign `null` to `undefined` in a `.ffi.ts` boundary module.",
+				"Do not write `null` values or types. Model absence as `undefined` in an explicit union, or as a Result error when absence is a failure. Convert a foreign `null` where it arrives (`headers.get(name) ?? undefined`) or narrow it with `value === null`; both are valid without a `.ffi.ts` boundary module.",
 		},
 	},
 	create(context) {

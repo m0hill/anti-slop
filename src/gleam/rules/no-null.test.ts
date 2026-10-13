@@ -15,6 +15,7 @@ tester.run("anti-slop-gleam/no-null", noNullRule, {
 		"const value = 0;",
 		"const match = pattern.exec(text); if (match === null) skip();",
 		"if (null != value) use(value);",
+		"const header = headers.get(name) ?? undefined;",
 		{ filename: boundary, code: "export function find(id: string): User | undefined { return lookup(id) ?? undefined; } const empty: string | null = null;" },
 	],
 	invalid: [

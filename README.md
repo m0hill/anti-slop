@@ -234,7 +234,7 @@ All Gleam dialect rules are skipped in `*.ffi.*` boundary modules.
 - `no-enums` — rejects `enum`, `const enum`, and `declare enum` in favor of literal or discriminated unions.
 - `no-loops` — rejects `while`, `do...while`, C-style `for`, and `for...in`; `for...of` and collection methods remain valid.
 - `no-mutable-bindings` — rejects `let`, `var`, and reassignment or update of bindings, including destructuring assignment. Property writes are covered by `no-shared-mutation`.
-- `no-null` — rejects `null` literals and `null` types; model absence with `undefined` or a `Result` error. Equality comparisons such as `match === null` remain valid so foreign `null` results can be narrowed precisely.
+- `no-null` — rejects `null` literals and `null` types; model absence with `undefined` or a `Result` error. Foreign `null` needs no boundary module: convert it where it arrives with `?? undefined`, or narrow it with an equality comparison such as `match === null`.
 - `no-shared-mutation` — rejects property writes, `delete`, array mutators such as `push` and `sort`, and `Object.assign` targets rooted in a parameter, import, or module-level binding. Values created locally may still be built up in place. Map and Set methods are not checked because `set`, `add`, and `delete` also name ordinary service methods.
 - `no-throw` — rejects `throw` in favor of returning a `Result`. Unrecoverable invariants call a `panic` helper defined in a boundary module.
 - `no-try-catch` — rejects `try` statements; catch foreign exceptions once in a boundary module and return a `Result`.
