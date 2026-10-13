@@ -20,7 +20,7 @@ const generic = [
 ];
 const gleam = [
   "no-classes", "no-enums", "no-loops", "no-mutable-bindings", "no-null", "no-shared-mutation",
-  "no-switch-catch-all", "no-throw", "no-try-catch",
+  "no-throw", "no-try-catch",
 ];
 const typeAware = [
   "await-thenable", "no-base-to-string", "no-floating-promises", "no-misused-promises",
@@ -38,6 +38,13 @@ const config = {
     ...typeAware.map((rule) => [`typescript/${rule}`, "error"]),
   ]),
 };
+config.rules["typescript/switch-exhaustiveness-check"] = ["error", {
+  allowDefaultCaseForExhaustiveSwitch: false, requireDefaultForNonUnion: true,
+}];
+// node:test runs describe/it/test without awaiting the promises they return.
+config.rules["typescript/no-floating-promises"] = ["error", {
+  allowForKnownSafeCalls: [{ from: "package", name: ["describe", "it", "suite", "test"], package: "node:test" }],
+}];
 if (arm === "plain") config.rules["oxc/no-accumulating-spread"] = "error";
 if (arm === "gleam") {
   config.jsPlugins.push({ name: "anti-slop-gleam", specifier: `${repo}/src/gleam/index.ts` });

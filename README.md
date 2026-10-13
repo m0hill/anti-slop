@@ -88,7 +88,10 @@ export default defineConfig({
   rules: {
     "typescript/await-thenable": "error",
     "typescript/no-base-to-string": "error",
-    "typescript/no-floating-promises": "error",
+    "typescript/no-floating-promises": [
+      "error",
+      { "allowForKnownSafeCalls": [{ "from": "package", "name": ["describe", "it", "suite", "test"], "package": "node:test" }] }
+    ],
     "typescript/no-misused-promises": "error",
     "typescript/no-redundant-type-constituents": "error",
     "typescript/no-unnecessary-condition": "error",
@@ -104,11 +107,27 @@ export default defineConfig({
     "typescript/restrict-plus-operands": "error",
     "typescript/restrict-template-expressions": "error",
     "typescript/strict-boolean-expressions": "error",
-    "typescript/switch-exhaustiveness-check": "error",
+    "typescript/switch-exhaustiveness-check": [
+      "error",
+      { "allowDefaultCaseForExhaustiveSwitch": false, "requireDefaultForNonUnion": true }
+    ],
     "typescript/use-unknown-in-catch-callback-variable": "error"
   }
 });
 ```
+
+`switch-exhaustiveness-check` requires every member of a union to have its own `case`, even when a `default` exists, so adding a variant breaks every `switch` that must handle it:
+
+```ts
+switch (payment.kind) {
+  case "card": return chargeCard(payment);
+  default: return chargeBank(payment); // reported: "bank" is not matched
+}
+```
+
+Its options also reject a `default` on a `switch` that already handles every member, and require one on a `switch` over a non-union type such as `string`. Group variants that share a branch with stacked `case` labels instead of a `default`.
+
+`node:test` runs `describe`, `it`, and `test` without awaiting their returned promises, so `no-floating-promises` allows those calls; add the equivalent entry for another test runner whose registration functions return promises.
 
 Type-aware rules read the nearest `tsconfig.json`. Enable `strict`, `exactOptionalPropertyTypes`, and `noUncheckedIndexedAccess` there; without `noUncheckedIndexedAccess`, `no-unnecessary-condition` reports necessary `undefined` checks on indexed reads as always false.
 
@@ -139,7 +158,7 @@ export default defineConfig({
 
 ### Optional Gleam dialect rules
 
-The Gleam plugin restricts TypeScript to a small dialect modeled on [Gleam](https://gleam.run/documentation/conventions-patterns-and-anti-patterns/): no exceptions, `null`, classes, enums, loops, mutable bindings, or mutation of shared values, and no catch-all `default` cases. Failure is returned as a `Result`, data is modeled with types and discriminated unions, and behavior lives in module functions. Constraining the language leaves agents fewer ways to write the same thing wrong.
+The Gleam plugin restricts TypeScript to a small dialect modeled on [Gleam](https://gleam.run/documentation/conventions-patterns-and-anti-patterns/): no exceptions, `null`, classes, enums, loops, mutable bindings, or mutation of shared values. Failure is returned as a `Result`, data is modeled with types and discriminated unions, and behavior lives in module functions. Constraining the language leaves agents fewer ways to write the same thing wrong.
 
 Every rule exempts boundary modules named `*.ffi.ts` (or any `*.ffi.{js,jsx,ts,tsx,mts,cts,mjs,cjs}`), the dialect's equivalent of Gleam's `@external`. Boundary modules wrap throwing, nullable, or class-based foreign APIs and export typed functions that return `Result` values. Use Oxlint `overrides` to relax rules for other paths, such as tests.
 
@@ -161,7 +180,6 @@ export default defineConfig({
     "anti-slop-gleam/no-mutable-bindings": "error",
     "anti-slop-gleam/no-null": "error",
     "anti-slop-gleam/no-shared-mutation": "error",
-    "anti-slop-gleam/no-switch-catch-all": "error",
     "anti-slop-gleam/no-throw": "error",
     "anti-slop-gleam/no-try-catch": "error"
   }
@@ -176,7 +194,7 @@ export type Result<Value, Error> =
   | { readonly ok: false; readonly error: Error };
 ```
 
-Syntax rules cannot prove a `switch` is exhaustive; the type-aware `typescript/switch-exhaustiveness-check` does, so keep the type-aware rules enabled with this plugin. `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread` steer reducers toward mutating their accumulator, which `no-shared-mutation` rejects because the accumulator is a parameter; prefer `for...of` or a small `fold` helper over `reduce`.
+Keep the type-aware rules enabled with this plugin: `typescript/switch-exhaustiveness-check` supplies Gleam's exhaustive `case`. `no-reduce-accumulator-copy` and `oxc/no-accumulating-spread` steer reducers toward mutating their accumulator, which `no-shared-mutation` rejects because the accumulator is a parameter; prefer `for...of` or a small `fold` helper over `reduce`.
 
 ## Rules
 
@@ -218,7 +236,6 @@ All Gleam dialect rules are skipped in `*.ffi.*` boundary modules.
 - `no-mutable-bindings` — rejects `let`, `var`, and reassignment or update of bindings, including destructuring assignment. Property writes are covered by `no-shared-mutation`.
 - `no-null` — rejects `null` literals and `null` types; model absence with `undefined` or a `Result` error. Equality comparisons such as `match === null` remain valid so foreign `null` results can be narrowed precisely.
 - `no-shared-mutation` — rejects property writes, `delete`, array mutators such as `push` and `sort`, and `Object.assign` targets rooted in a parameter, import, or module-level binding. Values created locally may still be built up in place. Map and Set methods are not checked because `set`, `add`, and `delete` also name ordinary service methods.
-- `no-switch-catch-all` — rejects `default` cases unless their first statement is an exhaustiveness check such as `value satisfies never;`.
 - `no-throw` — rejects `throw` in favor of returning a `Result`. Unrecoverable invariants call a `panic` helper defined in a boundary module.
 - `no-try-catch` — rejects `try` statements; catch foreign exceptions once in a boundary module and return a `Result`.
 
@@ -454,25 +471,6 @@ function findUser(id: UserId): Result<User, UserNotFound> {
   const user = users.get(id);
   if (user === undefined) return { ok: false, error: { kind: "UserNotFound", id } };
   return { ok: true, value: user };
-}
-```
-
-### Gleam: catch-all branches
-
-```ts
-switch (payment.kind) {
-  case "card": return chargeCard(payment);
-  default: return chargeBank(payment);
-}
-```
-
-Name every variant so adding one breaks this switch. A `default` is valid only as an exhaustiveness check:
-
-```ts
-switch (payment.kind) {
-  case "card": return chargeCard(payment);
-  case "bank": return chargeBank(payment);
-  default: payment satisfies never; return payment;
 }
 ```
 

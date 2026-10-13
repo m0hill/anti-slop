@@ -96,7 +96,10 @@ Complete when the operation and target path are established and pre-existing wor
    {
      "typescript/await-thenable": "error",
      "typescript/no-base-to-string": "error",
-     "typescript/no-floating-promises": "error",
+     "typescript/no-floating-promises": [
+       "error",
+       { "allowForKnownSafeCalls": [{ "from": "package", "name": ["describe", "it", "suite", "test"], "package": "node:test" }] }
+     ],
      "typescript/no-misused-promises": "error",
      "typescript/no-redundant-type-constituents": "error",
      "typescript/no-unnecessary-condition": "error",
@@ -112,10 +115,15 @@ Complete when the operation and target path are established and pre-existing wor
      "typescript/restrict-plus-operands": "error",
      "typescript/restrict-template-expressions": "error",
      "typescript/strict-boolean-expressions": "error",
-     "typescript/switch-exhaustiveness-check": "error",
+     "typescript/switch-exhaustiveness-check": [
+       "error",
+       { "allowDefaultCaseForExhaustiveSwitch": false, "requireDefaultForNonUnion": true }
+     ],
      "typescript/use-unknown-in-catch-callback-variable": "error"
    }
    ```
+
+   The `no-floating-promises` option allows `node:test` registration calls, which return promises the runner does not need awaited. If the repository uses another test runner whose `describe` or `it` returns a promise, add the equivalent entry.
 
    Type-aware rules read the nearest `tsconfig.json`. If it lacks `strict`, `exactOptionalPropertyTypes`, or `noUncheckedIndexedAccess`, recommend enabling them and ask before changing it; without `noUncheckedIndexedAccess`, `no-unnecessary-condition` reports necessary `undefined` checks on indexed reads. Keep a rule the user asks to defer at `"warn"` rather than dropping it.
 
@@ -159,7 +167,6 @@ Complete when the operation and target path are established and pre-existing wor
      "anti-slop-gleam/no-mutable-bindings": "error",
      "anti-slop-gleam/no-null": "error",
      "anti-slop-gleam/no-shared-mutation": "error",
-     "anti-slop-gleam/no-switch-catch-all": "error",
      "anti-slop-gleam/no-throw": "error",
      "anti-slop-gleam/no-try-catch": "error",
    },
