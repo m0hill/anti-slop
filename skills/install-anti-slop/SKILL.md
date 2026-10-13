@@ -151,7 +151,7 @@ Complete when the operation and target path are established and pre-existing wor
 
    Merge these entries with the generic plugin configuration rather than replacing it. Do not enable the Effect plugin merely because Effect appears transitively in a lockfile; require a direct package-manifest dependency or an explicit user request. The rule covers relative project imports. Report package-alias imports as a current limitation rather than pretending they are enforced.
 
-   Register the opt-in Gleam dialect plugin only when the user explicitly requests it; it bans classes, `null`, exceptions, loops, mutable bindings, and shared mutation, so existing code rarely passes without migration:
+   Register the opt-in Gleam dialect plugin only when the user explicitly requests it; it bans classes, `null`, exceptions, loops, mutable bindings, shared mutation, and direct clock, randomness, network, and file access, so existing code rarely passes without migration:
 
    ```ts
    jsPlugins: [
@@ -161,6 +161,7 @@ Complete when the operation and target path are established and pre-existing wor
      },
    ],
    rules: {
+     "anti-slop-gleam/no-ambient-capabilities": "error",
      "anti-slop-gleam/no-classes": "error",
      "anti-slop-gleam/no-enums": "error",
      "anti-slop-gleam/no-loops": "error",

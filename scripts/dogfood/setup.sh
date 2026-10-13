@@ -19,7 +19,7 @@ const generic = [
   ...(arm === "gleam" ? [] : ["no-reduce-accumulator-copy"]),
 ];
 const gleam = [
-  "no-classes", "no-enums", "no-loops", "no-mutable-bindings", "no-null", "no-shared-mutation",
+  "no-ambient-capabilities", "no-classes", "no-enums", "no-loops", "no-mutable-bindings", "no-null", "no-shared-mutation",
   "no-throw", "no-try-catch",
 ];
 const typeAware = [

@@ -162,7 +162,7 @@ export default defineConfig({
 
 ### Optional Gleam dialect rules
 
-The Gleam plugin restricts TypeScript to a small dialect modeled on [Gleam](https://gleam.run/documentation/conventions-patterns-and-anti-patterns/): no exceptions, `null`, classes, enums, loops, mutable bindings, or mutation of shared values. Failure is returned as a `Result`, data is modeled with types and discriminated unions, and behavior lives in module functions. Constraining the language leaves agents fewer ways to write the same thing wrong.
+The Gleam plugin restricts TypeScript to a small dialect modeled on [Gleam](https://gleam.run/documentation/conventions-patterns-and-anti-patterns/): no exceptions, `null`, classes, enums, loops, mutable bindings, mutation of shared values, or ambient clocks, randomness, network, and file access. Failure is returned as a `Result`, data is modeled with types and discriminated unions, and behavior lives in module functions. Constraining the language leaves agents fewer ways to write the same thing wrong.
 
 Every rule exempts boundary modules named `*.ffi.ts` (or any `*.ffi.{js,jsx,ts,tsx,mts,cts,mjs,cjs}`), the dialect's equivalent of Gleam's `@external`. Boundary modules wrap throwing, nullable, or class-based foreign APIs and export typed functions that return `Result` values. Use Oxlint `overrides` to relax rules for other paths, such as tests.
 
@@ -178,6 +178,7 @@ export default defineConfig({
     }
   ],
   rules: {
+    "anti-slop-gleam/no-ambient-capabilities": "error",
     "anti-slop-gleam/no-classes": "error",
     "anti-slop-gleam/no-enums": "error",
     "anti-slop-gleam/no-loops": "error",
@@ -236,6 +237,7 @@ All Gleam dialect rules are skipped in `*.ffi.*` boundary modules.
 
 - `no-classes` — rejects class declarations, class expressions, and `this` outside classes in favor of types and module functions.
 - `no-enums` — rejects `enum`, `const enum`, and `declare enum` in favor of literal or discriminated unions.
+- `no-ambient-capabilities` — rejects direct use of the clock (`Date.now()`, `new Date()`), randomness, timers, global `fetch`, `process`, and I/O modules such as `node:fs`. Take them as parameters and pass the real ones in from a `.ffi.ts` entry point, as Effect does with services and layers; tests then pass fakes. `new Date(value)` and type-only imports remain valid.
 - `no-loops` — rejects `while`, `do...while`, C-style `for`, and `for...in`; `for...of` and collection methods remain valid. Repeat-until work such as retries, polling, or pagination recurses with a counter parameter and fails at a named limit. Gleam recursion runs in constant stack space; JavaScript recursion does not, and an unbounded remote loop never ends.
 - `no-mutable-bindings` — rejects `let`, `var`, and reassignment or update of bindings, including destructuring assignment. Property writes are covered by `no-shared-mutation`.
 - `no-null` — rejects `null` literals and `null` types; model absence with `undefined` or a `Result` error. Foreign `null` needs no boundary module: convert it where it arrives with `?? undefined`, or narrow it with an equality comparison such as `match === null`.

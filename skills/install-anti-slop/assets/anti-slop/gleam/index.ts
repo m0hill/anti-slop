@@ -1,5 +1,6 @@
 import { eslintCompatPlugin } from "@oxlint/plugins";
 
+import { noAmbientCapabilitiesRule } from "./rules/no-ambient-capabilities.ts";
 import { noClassesRule } from "./rules/no-classes.ts";
 import { noEnumsRule } from "./rules/no-enums.ts";
 import { noLoopsRule } from "./rules/no-loops.ts";
@@ -13,6 +14,7 @@ import { noTryCatchRule } from "./rules/no-try-catch.ts";
 const antiSlopGleamPlugin = eslintCompatPlugin({
 	meta: { name: "anti-slop-gleam" },
 	rules: {
+		"no-ambient-capabilities": noAmbientCapabilitiesRule,
 		"no-classes": noClassesRule,
 		"no-enums": noEnumsRule,
 		"no-loops": noLoopsRule,
