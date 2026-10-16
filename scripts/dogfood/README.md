@@ -7,7 +7,7 @@ scripts/dogfood/run.sh 2026-10-baseline 3 importer library http-client workflow 
 node scripts/dogfood/report.mjs /tmp/dogfood/2026-10-baseline --out scripts/dogfood/results/2026-10-baseline.md
 ```
 
-`run.sh` creates one trial project per task, rule set, and run, launches `claude -p` in each (Haiku by default; set `DOGFOOD_MODEL`), and prints the report. Commit the report under `results/` so later rule changes can be compared against it.
+`run.sh` creates one trial project per task, rule set, and run, launches `claude -p` in each (Haiku by default; set `DOGFOOD_MODEL`), or `codex exec` with `DOGFOOD_AGENT=codex` (GPT-6-Luna by default), and prints the report. Commit the report under `results/` so later rule changes can be compared against it.
 
 - Trials extend the shipped `src/configs/recommended.json`, and the Gleam arm also `gleam.json`, so they test exactly what installs get. Both arms have Zod installed as the schema library.
 - Each trial gets `AGENTS.md` from the install skill's agent conventions, plus the Gleam conventions in the Gleam arm, and the prompt tells the agent to read it.

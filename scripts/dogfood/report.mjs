@@ -82,7 +82,8 @@ function measure(directory) {
     untouched = false;
   }
   return {
-    finished: transcript.is_error === false,
+    // Claude ends with a result that has `is_error`; Codex ends with `turn.completed` or `turn.failed`.
+    finished: transcript.is_error === false || transcript.type === "turn.completed",
     probed,
     passes: passesCheck(directory),
     untouched,
@@ -92,6 +93,7 @@ function measure(directory) {
     ffiFiles: files.filter((path) => path.includes(".ffi.")).length,
     counts: Object.fromEntries(Object.entries(patterns).map(([name, pattern]) => [name, source.match(pattern)?.length ?? 0])),
     costUsd: transcript.total_cost_usd ?? 0,
+    tokens: (transcript.usage?.input_tokens ?? 0) + (transcript.usage?.output_tokens ?? 0),
   };
 }
 
@@ -114,7 +116,7 @@ const format = (value) => (Number.isInteger(value) ? String(value) : value.toFix
 const ratio = (items, test) => `${items.filter(test).length}/${items.length}`;
 const total = (items) => items.map((item) => Object.values(item.violations).reduce((sum, n) => sum + n, 0));
 
-const header = ["task", "rules", "finished", "check passes", "config untouched", "probed", "lint runs", "violations", "source lines", "ffi files", ...Object.keys(patterns), "cost (USD)"];
+const header = ["task", "rules", "finished", "check passes", "config untouched", "probed", "lint runs", "violations", "source lines", "ffi files", ...Object.keys(patterns), "cost (USD)", "tokens (k)"];
 const rows = [...groups].sort(([a], [b]) => a.localeCompare(b)).map(([key, items]) => {
   const [task, arm] = key.split("\t");
   return [
@@ -130,6 +132,7 @@ const rows = [...groups].sort(([a], [b]) => a.localeCompare(b)).map(([key, items
     format(mean(items.map((item) => item.ffiFiles))),
     ...Object.keys(patterns).map((name) => format(mean(items.map((item) => item.counts[name])))),
     mean(items.map((item) => item.costUsd)).toFixed(2),
+    (mean(items.map((item) => item.tokens)) / 1000).toFixed(0),
   ];
 });
 
