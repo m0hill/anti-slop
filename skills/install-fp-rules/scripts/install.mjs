@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Copy the bundled plugin into the current repository. Usage: install.mjs [destination] [--force]
 import { cpSync, existsSync, mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const skillRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -18,4 +18,5 @@ if (existsSync(destination) && !force) {
 mkdirSync(dirname(destination), { recursive: true });
 cpSync(source, destination, { recursive: true, force });
 console.log(`Copied the plugin to ${destination}`);
-console.log(`Extend ${destination}/config.json from the repository's Oxlint configuration.`);
+const config = relative(process.cwd(), resolve(destination, "config.json")).replaceAll("\\", "/");
+console.log(`Add to the Oxlint configuration: "extends": ["./${config}"] and "ignorePatterns": ["${dirname(config)}/**"]`);

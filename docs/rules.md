@@ -278,7 +278,7 @@ const result = isExpired(session, () => 1_000);
 | `strict-boolean-expressions` | Conditions must be real booleans: write `text.length > 0`, not `text`. This avoids bugs where `0` or `""` counts as false. An optional boolean such as `context?.hasUI` is fine. |
 | `no-unsafe-*` | `any` must not spread. Parse untyped input with a schema library where it enters. |
 | `no-floating-promises`, `no-misused-promises` | Every promise is awaited or returned. |
-| `no-unnecessary-condition` | No checks for things the types already rule out. |
+| `no-unnecessary-condition` | No checks for things the types already rule out. Some library types are too optimistic (`document.body` can be null while the page loads; `JSON.stringify` can return `undefined`). Keep those checks: wrap the call in an IO file function with an honest return type, such as `(): HTMLElement \| null => document.body`. |
 | `no-unsafe-type-assertion` | No `as` that claims a value is narrower than it is, such as `input as User`. That lies to the type checker; parse the value instead. `as const` is fine. |
 | `require-array-sort-compare` | Sorting numbers needs a compare function. Without one, JavaScript sorts them as text, so `[10, 9]` stays `[10, 9]`. Write `numbers.toSorted((a, b) => a - b)`. Strings may sort without one. |
 

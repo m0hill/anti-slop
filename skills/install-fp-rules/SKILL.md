@@ -40,18 +40,19 @@ Read the repository's agent instructions and `git status`. Identify its package 
    ],
    ```
 
-   Keep every existing ignore, `extends` entry, and rule setting. Adjust the paths if the plugin was copied elsewhere, and add any other agent tooling directories the repository has; do not ignore every dot-directory. Do not copy the rule list out of `config.json`; extending it keeps future updates in one place. For Vite+, put both fields under `lint`, and merge the ignores into `fmt.ignorePatterns` too.
+   Also ignore code that Oxlint cannot type-check from this repository, such as a Deno project with its own imports: its types resolve to errors, and every `no-unsafe-*` rule reports them. Keep every existing ignore, `extends` entry, and rule setting. Adjust the paths if the plugin was copied elsewhere, and add any other agent tooling directories the repository has; do not ignore every dot-directory. Do not copy the rule list out of `config.json`; extending it keeps future updates in one place. For Vite+, put both fields under `lint`, and merge the ignores into `fmt.ignorePatterns` too.
 
    Then check the surrounding setup, and ask before changing any of it:
    - The repository's lint script should pass `--format default` to `oxlint`. Without a terminal, Oxlint prints nothing when lint passes, and agents write throwaway rule-breaking files to find out whether it ran.
    - The nearest `tsconfig.json` should enable `strict`, `exactOptionalPropertyTypes`, and `noUncheckedIndexedAccess`. Without the last one, `no-unnecessary-condition` reports necessary `undefined` checks on indexed reads.
+   - If `package.json` gives `oxlint` or `oxlint-tsgolint` a range that does not match the installed version, point it out; the plugin needs the installed `oxlint` and `@oxlint/plugins` to match exactly.
    - The repository should have a schema library to parse untyped input. If it has none, recommend Zod; its `safeParse` already returns a result value.
    - `config.json` relaxes most rules in `*.test.*` and `*.spec.*` files. If tests are named differently, add a matching override. `no-floating-promises` allows `node:test` registration calls; add the equivalent entry for another runner whose `describe` or `it` returns a promise.
 
-   Existing code rarely passes without migration. Ask before moving code into `.io.ts` files, and before adding overrides for paths other than tests.
+   Existing code rarely passes without migration. Ask before moving code into `.io.ts` files, and before adding overrides for paths other than tests. If the user wants to adopt the rules gradually, propose one of these instead of lowering severities everywhere: an override that turns the `fp/*` rules off for folders not yet migrated, or extending the config only in the packages that should follow it.
 
 4. Offer to add [the conventions](references/conventions.md) to the repository's `AGENTS.md` or the agent instruction file it already uses. Lint messages reach an agent only after it writes a rejected pattern; the conventions name the replacements up front, including practices no rule can check, such as limits on polling. Add the section verbatim, then adapt example names such as `PageSchema`. Do not overwrite existing instructions.
 
-5. Run the repository's lint command and typecheck (for Vite+, `vp check`). Report findings in project source, and fix them only if the user asked for migration. Do not suppress rules, lower severities, or add casts to make lint pass.
+5. Run the repository's lint command and typecheck (for Vite+, `vp check`). Report the findings counted by rule and by folder, and separate them from findings the repository had before. Fix them only if the user asked for migration. Do not suppress rules, lower severities, or add casts to make lint pass.
 
 6. Record provenance in `UPSTREAM.md` beside the vendored copy: source repository, the exact commit the copied files come from, installed paths, and intentional deviations. If the commit cannot be established, record it as unknown rather than guessing. Report the installed path, source commit, dependency and configuration changes, and check results.
