@@ -3,6 +3,7 @@ import { eslintCompatPlugin } from "@oxlint/plugins";
 import { noAmbientCapabilitiesRule } from "./rules/no-ambient-capabilities.ts";
 import { noClassesRule } from "./rules/no-classes.ts";
 import { noEnumsRule } from "./rules/no-enums.ts";
+import { noIgnoredResultRule } from "./rules/no-ignored-result.ts";
 import { noLoopsRule } from "./rules/no-loops.ts";
 import { noModuleMockingRule } from "./rules/no-module-mocking.ts";
 import { noMutableBindingsRule } from "./rules/no-mutable-bindings.ts";
@@ -18,6 +19,7 @@ const fpPlugin = eslintCompatPlugin({
 		"no-ambient-capabilities": noAmbientCapabilitiesRule,
 		"no-classes": noClassesRule,
 		"no-enums": noEnumsRule,
+		"no-ignored-result": noIgnoredResultRule,
 		"no-loops": noLoopsRule,
 		"no-module-mocking": noModuleMockingRule,
 		"no-mutable-bindings": noMutableBindingsRule,

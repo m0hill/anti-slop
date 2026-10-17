@@ -12,6 +12,7 @@
     "fp/no-ambient-capabilities": "error",
     "fp/no-classes": "error",
     "fp/no-enums": "error",
+    "fp/no-ignored-result": "error",
     "fp/no-loops": "error",
     "fp/no-module-mocking": "error",
     "fp/no-mutable-bindings": "error",
@@ -76,6 +77,7 @@
       ],
       "rules": {
         "fp/no-ambient-capabilities": "off",
+        "fp/no-ignored-result": "off",
         "fp/no-loops": "off",
         "fp/no-mutable-bindings": "off",
         "fp/no-null": "off",

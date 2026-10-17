@@ -38,7 +38,7 @@ This project's lint rules keep TypeScript in a functional style: failures are va
 
 ### Tests
 
-- Tests may use loops, `let`, `throw`, `try`, `null` in fixtures of wire data, real timers, and fakes that record their calls.
+- Tests may use loops, `let`, `throw`, `try`, `null` in fixtures of wire data, real timers, and fakes that record their calls, and may ignore a `Result` when they only check side effects.
 - `node:assert/strict` assertions narrow types. After `assert.equal(result.ok, false)`, read `result.error` directly; a second check is reported as unnecessary. To check a whole value, use `assert.deepEqual(result, { ok: false, error: { ... } })`.
 - Type fixtures with the schema's input type, so a fixture that drifts from the schema fails typecheck: `const reply = (body: z.input<typeof PageSchema>) => new Response(JSON.stringify(body))`.
 
@@ -46,7 +46,7 @@ This project's lint rules keep TypeScript in a functional style: failures are va
 
 Read this list instead of writing throwaway files to discover the rules.
 
-- Functional style, outside `*.io.*` files: `no-throw` (return a `Result`, also instead of `Promise.reject`), `no-try-catch` (wrap throwing code in an `.io.ts` file), `no-null` (use `undefined`), `no-classes` (types plus functions; `Error` subclasses become failure variants, and classes a framework requires go in `.io.ts`), `no-enums` (string literal unions), `no-loops` (collection methods, `for...of`, or bounded recursion), `no-mutable-bindings` (`const` only; long-lived state goes in one `state` object), `no-shared-mutation` (return new values instead of changing parameters, imports, or module state), and `no-ambient-capabilities` (take the clock, randomness, timers, `fetch`, `process`, and file access as parameters).
+- Functional style, outside `*.io.*` files: `no-throw` (return a `Result`, also instead of `Promise.reject`), `no-ignored-result` (check or return every `Result`; write `void` to drop one on purpose), `no-try-catch` (wrap throwing code in an `.io.ts` file), `no-null` (use `undefined`), `no-classes` (types plus functions; `Error` subclasses become failure variants, and classes a framework requires go in `.io.ts`), `no-enums` (string literal unions), `no-loops` (collection methods, `for...of`, or bounded recursion), `no-mutable-bindings` (`const` only; long-lived state goes in one `state` object), `no-shared-mutation` (return new values instead of changing parameters, imports, or module state), and `no-ambient-capabilities` (take the clock, randomness, timers, `fetch`, `process`, and file access as parameters).
 - Tests: `no-module-mocking` rejects `vi.mock` and `jest.mock`; pass fakes through parameters.
 - Untyped data: `no-unsafe-argument`, `no-unsafe-assignment`, `no-unsafe-call`, `no-unsafe-member-access`, `no-unsafe-return`, `no-redundant-type-constituents`. `no-unsafe-type-assertion` rejects `as` that claims a narrower type than the value has. Parse with the schema where data enters; pass parsed types onward, never `any`.
 - Conditions: `strict-boolean-expressions` requires booleans in conditions (`text.length > 0`, `value !== undefined`); an optional boolean such as `context?.hasUI` is allowed. `no-unnecessary-condition` rejects checks the types already rule out, and `no-unnecessary-type-assertion` rejects assertions that change nothing.

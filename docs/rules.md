@@ -5,6 +5,7 @@ Every rule here exists for the same reason: to make TypeScript code easier to fo
 All rules skip IO files (`*.io.ts`, explained in the [README](../README.md#io-files)). In test files, most of them are turned off; see [Tests](#tests) at the end.
 
 - [no-throw](#no-throw)
+- [no-ignored-result](#no-ignored-result)
 - [no-try-catch](#no-try-catch)
 - [no-null](#no-null)
 - [no-classes](#no-classes)
@@ -41,6 +42,25 @@ function findUser(id: UserId): Result<User, UserError> {
 `Promise.reject` is a `throw` for async code, so it is banned too. An async function returns its failure the same way: `return err({ kind: "UserNotFound", id })`.
 
 For a real bug, where the program should crash, call a `panic` helper defined in an IO file.
+
+## no-ignored-result
+
+**Catches:** calling a function that returns a `Result` and doing nothing with the value.
+
+**Why:** Once failures are values, ignoring the value is the new way to lose an error. It is the same bug as an empty `catch`, but quieter.
+
+```ts
+// Rejected: if saving fails, nobody finds out
+saveUser(store, user);
+
+// Instead
+const saved = saveUser(store, user);
+if (!saved.ok) return saved;
+```
+
+To drop a failure on purpose, say so: `void saveUser(store, user);`.
+
+**Limits:** the rule has no type information, so it only knows about functions declared in the same file. A function counts as returning a `Result` when its return type mentions `Result`, or when it returns `ok(...)`, `err(...)`, or an object with an `ok` field. Calls to imported functions are not checked.
 
 ## no-try-catch
 
@@ -266,7 +286,8 @@ The rest cover `throw` and `reject` with non-errors, and string building with va
 
 ## Tests
 
-Tests need things these rules forbid. They repeat actions, use fakes that record calls, wait on real timers, and copy wire data that contains `null`. So in `*.test.*` and `*.spec.*` files these rules are off:
+Tests need things these rules forbid. They repeat actions, use fakes that record calls, wait on real timers, copy wire data that contains `null`, and call functions only to check their side effects. So in `*.test.*` and `*.spec.*` files these rules are off:
+- `no-ignored-result`
 - `no-throw`
 - `no-try-catch`
 - `no-null`
