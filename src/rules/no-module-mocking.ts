@@ -4,77 +4,60 @@ import { resolveVariable } from "../shared/scope.ts";
 
 import type { ESTree, SourceCode } from "@oxlint/plugins";
 
-const moduleMockMethods = new Set(["doMock", "mock", "unstable_mockModule"]);
+const MOCK_METHODS = new Set(["doMock", "mock", "unstable_mockModule"]);
+const FRAMEWORK_IMPORTS = new Map([
+	["vitest", "vi"],
+	["@jest/globals", "jest"],
+]);
 
-function importedName(node: ESTree.Node): string | null {
-  if (node.type !== "ImportSpecifier") return null;
-  return node.imported.type === "Identifier" ? node.imported.name : node.imported.value;
+function importedName(node: ESTree.Node): string | undefined {
+	if (node.type !== "ImportSpecifier") return undefined;
+	return node.imported.type === "Identifier" ? node.imported.name : node.imported.value;
 }
 
-function isTestFrameworkObject(
-  sourceCode: SourceCode,
-  expression: ESTree.Expression,
-): expression is ESTree.IdentifierReference {
-  if (expression.type !== "Identifier") return false;
-  if (
-    (expression.name === "vi" || expression.name === "jest") &&
-    sourceCode.isGlobalReference(expression)
-  ) {
-    return true;
-  }
-
-  const variable = resolveVariable(sourceCode, expression);
-  if (variable === null || variable.defs.length === 0) {
-    return expression.name === "vi" || expression.name === "jest";
-  }
-  return variable.defs.some((definition) => {
-    if (definition.type !== "ImportBinding" || definition.parent?.type !== "ImportDeclaration") {
-      return false;
-    }
-    const source = definition.parent.source.value;
-    const name = importedName(definition.node);
-    return (source === "vitest" && name === "vi") || (source === "@jest/globals" && name === "jest");
-  });
+/** Reports whether an expression is Vitest's `vi` or Jest's `jest`, as a global or an import. */
+function isTestFramework(sourceCode: SourceCode, expression: ESTree.Expression): boolean {
+	if (expression.type !== "Identifier") return false;
+	const variable = resolveVariable(sourceCode, expression);
+	if (variable === undefined || variable.defs.length === 0) {
+		return expression.name === "vi" || expression.name === "jest";
+	}
+	return variable.defs.some(
+		(definition) =>
+			definition.type === "ImportBinding" &&
+			definition.parent?.type === "ImportDeclaration" &&
+			FRAMEWORK_IMPORTS.get(definition.parent.source.value) === importedName(definition.node),
+	);
 }
 
-function moduleMockCall(sourceCode: SourceCode, callee: ESTree.Expression): boolean {
-  if (!("property" in callee) || !("object" in callee) || !("computed" in callee)) return false;
-  if (!isTestFrameworkObject(sourceCode, callee.object)) return false;
-  const property = callee.property;
-  const method = callee.computed
-    ? property.type === "Literal" &&
-      (property.value === "doMock" ||
-        property.value === "mock" ||
-        property.value === "unstable_mockModule")
-      ? property.value
-      : null
-    : property.type === "Identifier"
-      ? property.name
-      : null;
-  return method !== null && moduleMockMethods.has(method);
+function methodName(callee: ESTree.MemberExpression): string | undefined {
+	const property = callee.property;
+	if (!callee.computed) return property.type === "Identifier" ? property.name : undefined;
+	return property.type === "Literal" && typeof property.value === "string" ? property.value : undefined;
 }
 
-/** Ban test framework module mocking in favor of real dependency seams. */
+/** Keep test doubles flowing through parameters, the same seam production code uses. */
 export const noModuleMockingRule = defineRule({
-  meta: {
-    type: "problem",
-    docs: {
-      description:
-        "Disallow Vitest and Jest module mocking; tests must replace dependencies through real interfaces.",
-    },
-    messages: {
-      moduleMock:
-        "Replace module mocking with dependency injection through a real interface, service layer, or faithful test implementation.",
-    },
-  },
-  createOnce(context) {
-    return {
-      CallExpression(node) {
-        if (node.callee.type === "Super" || node.callee.type === "V8IntrinsicExpression") return;
-        if (moduleMockCall(context.sourceCode, node.callee)) {
-          context.report({ node, messageId: "moduleMock" });
-        }
-      },
-    };
-  },
+	meta: {
+		type: "problem",
+		docs: {
+			description: "Disallow Vitest and Jest module mocking; tests pass fakes as parameters instead.",
+		},
+		messages: {
+			moduleMock:
+				"Do not mock modules. Take the dependency as a parameter and pass a fake from the test, the same way the entry point passes the real one.",
+		},
+	},
+	create(context) {
+		return {
+			CallExpression(node) {
+				const callee = node.callee;
+				if (callee.type !== "MemberExpression") return;
+				const method = methodName(callee);
+				if (method === undefined || !MOCK_METHODS.has(method)) return;
+				if (!isTestFramework(context.sourceCode, callee.object)) return;
+				context.report({ node, messageId: "moduleMock" });
+			},
+		};
+	},
 });

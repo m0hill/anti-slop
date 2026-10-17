@@ -1,4 +1,4 @@
 node_modules/
-dist/
+dogfood/.generic/
 .DS_Store
 *.log

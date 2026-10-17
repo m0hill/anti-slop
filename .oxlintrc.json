@@ -1,11 +1,3 @@
 {
-  // This repository follows its own recommended configuration with two exceptions.
-  // Rule code narrows AST literal values, already typed unions, with `typeof`, which
-  // no-runtime-typeof cannot tell apart from parsing unknown input. Rule options arrive
-  // untyped and the plugin has no schema library dependency to parse them with.
-  "extends": ["./src/configs/recommended.json"],
-  "rules": {
-    "anti-slop/no-runtime-typeof": "off",
-    "anti-slop/no-unknown-parameters": "off"
-  }
+  "extends": ["./src/config.json"]
 }

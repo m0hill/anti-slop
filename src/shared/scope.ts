@@ -1,17 +1,17 @@
 import type { ESTree, Scope, SourceCode, Variable } from "@oxlint/plugins";
 
+function lookup(scope: Scope, name: string): Variable | undefined {
+	const variable = scope.set.get(name);
+	if (variable !== undefined || scope.upper === null) return variable;
+	return lookup(scope.upper, name);
+}
+
 /** Resolve an identifier to its binding by walking lexical scopes upward. */
 export function resolveVariable(
 	sourceCode: SourceCode,
 	identifier: ESTree.IdentifierReference,
-): Variable | null {
-	let scope: Scope | null = sourceCode.getScope(identifier);
-	while (scope !== null) {
-		const variable = scope.set.get(identifier.name);
-		if (variable !== undefined) return variable;
-		scope = scope.upper;
-	}
-	return null;
+): Variable | undefined {
+	return lookup(sourceCode.getScope(identifier), identifier.name);
 }
 
 /** Reports whether an expression names an unshadowed global binding. */
@@ -23,5 +23,5 @@ export function isGlobalIdentifier(
 	if (expression.type !== "Identifier" || expression.name !== name) return false;
 	if (sourceCode.isGlobalReference(expression)) return true;
 	const variable = resolveVariable(sourceCode, expression);
-	return variable === null || variable.defs.length === 0;
+	return variable === undefined || variable.defs.length === 0;
 }

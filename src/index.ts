@@ -1,45 +1,31 @@
 import { eslintCompatPlugin } from "@oxlint/plugins";
 
-import { noArrayFilterMapRule } from "./rules/no-array-filter-map.ts";
-import { noReduceAccumulatorCopyRule } from "./rules/no-reduce-accumulator-copy.ts";
-import { noChainedTypeAssertionsRule } from "./rules/no-chained-type-assertions.ts";
-import { noConditionalEmptyObjectSpreadRule } from "./rules/no-conditional-empty-object-spread.ts";
-import { noKnownValueWideningRule } from "./rules/no-known-value-widening.ts";
+import { noAmbientCapabilitiesRule } from "./rules/no-ambient-capabilities.ts";
+import { noClassesRule } from "./rules/no-classes.ts";
+import { noEnumsRule } from "./rules/no-enums.ts";
+import { noLoopsRule } from "./rules/no-loops.ts";
 import { noModuleMockingRule } from "./rules/no-module-mocking.ts";
-import { noObjectParametersRule } from "./rules/no-object-parameters.ts";
-import { noReflectApplyRule } from "./rules/no-reflect-apply.ts";
-import { noReflectGetRule } from "./rules/no-reflect-get.ts";
-import { noRuntimeTypeofRule } from "./rules/no-runtime-typeof.ts";
-import { noForbiddenTermInSymbolNamesRule } from "./rules/no-shape-in-symbol-names.ts";
-import { noUnknownParametersRule } from "./rules/no-unknown-parameters.ts";
-import { noUnknownReturnsRule } from "./rules/no-unknown-returns.ts";
-import { noUnknownTypeAliasesRule } from "./rules/no-unknown-type-aliases.ts";
-import { noUnsafeDictionaryTypeRule } from "./rules/no-unsafe-dictionary-type.ts";
-import { noWidenThenAssertRule } from "./rules/no-widen-then-assert.ts";
-import { requireSafetyCommentForTypeAssertionRule } from "./rules/require-safety-comment-for-type-assertion.ts";
+import { noMutableBindingsRule } from "./rules/no-mutable-bindings.ts";
+import { noNullRule } from "./rules/no-null.ts";
+import { noSharedMutationRule } from "./rules/no-shared-mutation.ts";
+import { noThrowRule } from "./rules/no-throw.ts";
+import { noTryCatchRule } from "./rules/no-try-catch.ts";
 
-/** Generic Oxlint rules that reject low-evidence and low-signal implementation patterns. */
-const antiSlopPlugin = eslintCompatPlugin({
-	meta: { name: "anti-slop" },
+/** Oxlint rules that restrict TypeScript to a small, Gleam-like dialect. */
+const gleamPlugin = eslintCompatPlugin({
+	meta: { name: "gleam" },
 	rules: {
-		"no-array-filter-map": noArrayFilterMapRule,
-		"no-reduce-accumulator-copy": noReduceAccumulatorCopyRule,
-		"no-chained-type-assertions": noChainedTypeAssertionsRule,
-		"no-conditional-empty-object-spread": noConditionalEmptyObjectSpreadRule,
-		"no-known-value-widening": noKnownValueWideningRule,
+		"no-ambient-capabilities": noAmbientCapabilitiesRule,
+		"no-classes": noClassesRule,
+		"no-enums": noEnumsRule,
+		"no-loops": noLoopsRule,
 		"no-module-mocking": noModuleMockingRule,
-		"no-object-parameters": noObjectParametersRule,
-		"no-reflect-apply": noReflectApplyRule,
-		"no-reflect-get": noReflectGetRule,
-		"no-runtime-typeof": noRuntimeTypeofRule,
-		"no-unsafe-dictionary-type": noUnsafeDictionaryTypeRule,
-		"no-shape-in-symbol-names": noForbiddenTermInSymbolNamesRule,
-		"no-unknown-parameters": noUnknownParametersRule,
-		"no-unknown-returns": noUnknownReturnsRule,
-		"no-unknown-type-aliases": noUnknownTypeAliasesRule,
-		"no-widen-then-assert": noWidenThenAssertRule,
-		"require-safety-comment-for-type-assertion": requireSafetyCommentForTypeAssertionRule,
+		"no-mutable-bindings": noMutableBindingsRule,
+		"no-null": noNullRule,
+		"no-shared-mutation": noSharedMutationRule,
+		"no-throw": noThrowRule,
+		"no-try-catch": noTryCatchRule,
 	},
 });
 
-export default antiSlopPlugin;
+export default gleamPlugin;
