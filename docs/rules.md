@@ -18,7 +18,7 @@ All rules skip IO files (`*.io.ts`, explained in the [README](../README.md#io-fi
 
 ## no-throw
 
-**Catches:** `throw`.
+**Catches:** `throw` and `Promise.reject(...)`.
 
 **Why:** A function that throws hides its failures. Its signature says it returns a `User`, but it might not, and nothing tells the caller to handle that. Returning a `Result` puts the failure in the type, so the caller has to deal with it.
 
@@ -37,6 +37,8 @@ function findUser(id: UserId): Result<User, UserError> {
   return ok(user);
 }
 ```
+
+`Promise.reject` is a `throw` for async code, so it is banned too. An async function returns its failure the same way: `return err({ kind: "UserNotFound", id })`.
 
 For a real bug, where the program should crash, call a `panic` helper defined in an IO file.
 
@@ -257,6 +259,8 @@ const result = isExpired(session, () => 1_000);
 | `no-unsafe-*` | `any` must not spread. Parse untyped input with a schema library where it enters. |
 | `no-floating-promises`, `no-misused-promises` | Every promise is awaited or returned. |
 | `no-unnecessary-condition` | No checks for things the types already rule out. |
+| `no-unsafe-type-assertion` | No `as` that claims a value is narrower than it is, such as `input as User`. That lies to the type checker; parse the value instead. `as const` is fine. |
+| `require-array-sort-compare` | Sorting numbers needs a compare function. Without one, JavaScript sorts them as text, so `[10, 9]` stays `[10, 9]`. Write `numbers.toSorted((a, b) => a - b)`. Strings may sort without one. |
 
 The rest cover `throw` and `reject` with non-errors, and string building with values that do not print well.
 

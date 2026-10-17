@@ -22,7 +22,7 @@ Every lint message says what to write instead, so an agent that breaks a rule le
 
 | Rule | Bans | Use instead |
 |---|---|---|
-| `no-throw` | `throw` | return a `Result` |
+| `no-throw` | `throw`, `Promise.reject` | return a `Result` |
 | `no-try-catch` | `try` | wrap throwing code once, in an IO file |
 | `no-null` | `null` | `undefined` |
 | `no-classes` | classes, `this` | types and functions |
