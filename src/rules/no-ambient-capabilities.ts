@@ -58,7 +58,7 @@ function ioModuleName(source: string): string | undefined {
 	return IO_MODULES.has(name) ? name : undefined;
 }
 
-/** Pass clocks, randomness, timers, network, environment, and file access in as parameters, as Effect services do. */
+/** Pass clocks, randomness, timers, network, environment, and file access in as parameters. */
 export const noAmbientCapabilitiesRule = defineRule({
 	meta: {
 		type: "problem",

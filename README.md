@@ -1,121 +1,101 @@
 # anti-slop-gleam
 
-Oxlint rules that restrict TypeScript to a small dialect modeled on [Gleam](https://gleam.run/documentation/conventions-patterns-and-anti-patterns/). The dialect has no exceptions, `null`, classes, enums, loops, mutable bindings, or shared mutation, and no direct use of the clock, randomness, network, or files. Failure is a returned `Result`, data is types and discriminated unions, and behavior is plain module functions.
+Lint rules that make TypeScript look like [Gleam](https://gleam.run): a small language with one clear way to do each thing.
 
-It is built for coding agents. A smaller language leaves an agent fewer ways to write the same thing wrong, and every lint message names the replacement to use.
+## Why
 
-This is a fork of [dmmulroy/anti-slop](https://github.com/dmmulroy/anti-slop) that keeps only the dialect. The fork's earlier generic and Effect rules live on in git history at the `generic-rules` tag.
+Coding agents write TypeScript fast, but TypeScript offers many ways to do the same thing, and many of them hide bugs:
+- exceptions nobody catches;
+- two kinds of "nothing" (`null` and `undefined`);
+- objects changed behind your back;
+- code that quietly reads the clock or the network.
 
-## What the dialect looks like
+These rules remove those options. What is left is a small dialect:
+- **Failures are values.** Functions return a `Result` instead of throwing, so the type says what can go wrong.
+- **Data is plain.** Types and unions instead of classes and enums. Values are never changed in place; you make a new one.
+- **Inputs are visible.** The clock, randomness, network, and files are passed in as parameters, so every function can be tested with fakes.
+- **One way to repeat.** Collection methods and `for...of`. Repeat-until work uses recursion with a limit.
 
-```ts
-// Rejected: throws, returns null, reads the clock directly.
-function findSession(id: SessionId): Session | null {
-  const session = sessions.get(id);
-  if (session === undefined) throw new Error(`missing ${id}`);
-  return session.expiresAt < Date.now() ? null : session;
-}
+Every lint message says what to write instead, so an agent that breaks a rule learns the fix right away.
 
-// Accepted: failure is a value, and the clock is a parameter.
-function findSession(sessions: Sessions, id: SessionId, now: () => number): Result<Session, SessionError> {
-  const session = sessions.get(id);
-  if (session === undefined) return err({ kind: "SessionNotFound", id });
-  if (session.expiresAt < now()) return err({ kind: "SessionExpired", id });
-  return ok(session);
-}
-```
+## The rules
 
-Code that cannot follow the dialect, such as a library that throws or a framework that needs a class, goes in a boundary module named `*.ffi.ts`, the counterpart of Gleam's `@external`. The rules skip these files. A boundary module wraps the foreign API and exports plain functions that return `Result` or `undefined`. The program's entry point is usually one too: it creates the real clock, `fetch`, and file access and passes them in.
-
-## Rules
-
-Every rule below skips `*.ffi.*` files.
-
-| Rule | Rejects | Write instead |
+| Rule | Bans | Use instead |
 |---|---|---|
-| `no-throw` | `throw` | return a `Result`; for a broken invariant, call a `panic` helper from a boundary module |
-| `no-try-catch` | `try` statements | wrap throwing code in a boundary module, or convert a rejection inline with `.then(ok, (cause: unknown) => err(...))` |
-| `no-null` | `null` values and types | `undefined`; convert foreign `null` where it arrives with `?? undefined`. Comparisons such as `match === null` stay valid |
-| `no-classes` | classes and `this` | types plus module functions. `Error` subclasses become failure variants; a class a framework requires goes in a boundary module |
-| `no-enums` | `enum`, `const enum`, `declare enum` | string literal or discriminated unions |
-| `no-loops` | `while`, `do...while`, C-style `for`, `for...in` | collection methods, `for...of`, or recursion that fails at a named limit |
-| `no-mutable-bindings` | `let`, `var`, and reassignment | `const`. State that callbacks change goes in one `const state = { ... }` object, reported once per function |
-| `no-shared-mutation` | property writes, `delete`, array mutators, and `Object.assign` on parameters, imports, or module state | return a new value. Values created locally may still be built up in place |
-| `no-ambient-capabilities` | the clock, randomness, timers, global `fetch`, `process`, and I/O modules such as `node:fs` | take them as parameters; tests pass fakes |
-| `no-module-mocking` | `vi.mock`, `jest.mock`, and their variants | pass fakes through the same parameters |
+| `no-throw` | `throw` | return a `Result` |
+| `no-try-catch` | `try` | wrap throwing code once, in a boundary file |
+| `no-null` | `null` | `undefined` |
+| `no-classes` | classes, `this` | types and functions |
+| `no-enums` | `enum` | string unions |
+| `no-loops` | `while`, `for (;;)`, `for...in` | collection methods, `for...of`, recursion |
+| `no-mutable-bindings` | `let`, `var`, reassignment | `const` |
+| `no-shared-mutation` | changing parameters, imports, or module state | return a new value |
+| `no-ambient-capabilities` | `Date.now()`, `Math.random()`, `fetch`, `process`, `node:fs`, ... | take them as parameters |
+| `no-module-mocking` | `vi.mock`, `jest.mock` | pass fakes as parameters |
 
-Each rule's file in [`src/rules/`](src/rules) holds its full behavior, and the test beside it shows accepted and rejected code.
+The config also turns on Oxlint's type-aware TypeScript rules, for example the one that makes every `switch` handle every case.
 
-`src/config.json` also turns on Oxlint's type-aware `typescript/*` rules, which see what syntax cannot:
-- `switch-exhaustiveness-check` stands in for Gleam's exhaustive `case`. It requires a `case` for every union member and rejects a `default` that hides a missing one.
-- `strict-boolean-expressions` requires real booleans in conditions, but allows an optional boolean such as `context?.hasUI`.
-- The `no-unsafe-*` rules keep `any` from escaping a parse.
-- `no-floating-promises` and its relatives catch unhandled promises.
+**[docs/rules.md](docs/rules.md)** explains each rule with examples.
 
-### Tests
+## Boundary files
 
-Tests need what the dialect forbids: they repeat actions, use fakes that record calls, wait on real timers, and reproduce wire data that contains `null`. In `*.test.*` and `*.spec.*` files the config therefore turns off every dialect rule except three: `no-classes` (a fake can be an object literal), `no-enums`, and `no-module-mocking`.
+Real programs still have to call code that throws, returns `null`, or needs a class. That code goes in files named `*.ffi.ts`, which the rules skip. ("FFI" means foreign function interface; Gleam uses the same idea for calling other languages.)
+
+A boundary file is a thin wrapper. It calls the foreign API, catches its errors, and exports plain functions that return `Result` or `undefined`. The program's entry point is usually a boundary file too: it creates the real clock and `fetch` and passes them in.
+
+Keep these files small. Anything in them is not checked.
 
 ## Install
 
-The plugin is meant to be vendored. Copy it into the repository, then read it and change it to suit you. The install skill does this:
+Copy `src/` into your project, for example to `tools/oxlint/anti-slop-gleam/`. Then install these three packages at matching versions:
+- `oxlint`
+- `@oxlint/plugins`
+- `oxlint-tsgolint`
 
-```bash
-npx skills add m0hill/anti-slop --skill install-anti-slop-gleam
-```
-
-Then ask your agent to install anti-slop-gleam. The skill:
-- copies `src/` (without tests) to `tools/oxlint/anti-slop-gleam/`;
-- installs `oxlint`, `@oxlint/plugins`, and `oxlint-tsgolint` at matching versions;
-- extends `config.json` and runs lint;
-- offers to add the conventions to `AGENTS.md`;
-- records the source commit in `UPSTREAM.md`.
-
-It can also update an existing copy without discarding local changes.
-
-To install by hand, copy `src/` yourself, install those three packages as exactly pinned development dependencies, and extend the config:
+Finally, extend the config:
 
 ```json
 {
   "extends": ["./tools/oxlint/anti-slop-gleam/config.json"],
-  "ignorePatterns": ["tools/oxlint/anti-slop-gleam/**", ".claude/**", ".codex/**", ".pi/**"]
+  "ignorePatterns": ["tools/oxlint/anti-slop-gleam/**"]
 }
 ```
 
-Also set up the following:
-- Run Oxlint with `--format default`. Without it, Oxlint prints nothing on a clean run, so an agent cannot tell a pass from a run that checked nothing.
-- Enable `strict`, `exactOptionalPropertyTypes`, and `noUncheckedIndexedAccess` in `tsconfig.json`.
-- Add a schema library such as [Zod](https://zod.dev) to parse untyped input. Its `safeParse` already returns a result value.
-- Add a project-owned `Result` type. [`conventions.md`](skills/install-anti-slop-gleam/references/conventions.md) shows one.
+Or let an agent do it with the [install skill](skills/install-anti-slop-gleam/SKILL.md).
 
-### Agent conventions
+Then:
+1. Add [conventions.md](skills/install-anti-slop-gleam/references/conventions.md) to your `AGENTS.md`. It tells agents how to write the dialect before they hit a lint error.
+2. Run Oxlint with `--format default`, so a clean run still prints something.
+3. Turn on `strict`, `exactOptionalPropertyTypes`, and `noUncheckedIndexedAccess` in `tsconfig.json`.
+4. Use a schema library such as [Zod](https://zod.dev) to check data coming into the program.
 
-Lint messages reach an agent only after it writes a rejected pattern. [`conventions.md`](skills/install-anti-slop-gleam/references/conventions.md) describes the dialect up front, including practices no rule can check, such as limits on polling and retries. Put it in the repository's `AGENTS.md`.
+## Project layout
 
-## Limits
-
-The rules read syntax and lexical scope through Oxlint's ESTree API, without type information. They resolve names within a file but not across imports. For example, `no-shared-mutation` treats every parameter as shared, and does not check `Map` and `Set` methods, because `set`, `add`, and `delete` also name ordinary service methods. The type-aware `typescript/*` rules cover what needs types.
-
-## Repository layout
-
-| Path | Contents |
-|---|---|
-| `src/index.ts` | the plugin, which registers every rule |
-| `src/config.json` | the configuration installs extend |
-| `src/rules/` | one file per rule, with its RuleTester suite beside it |
-| `src/shared/` | helpers for boundary files and scope lookup |
-| `skills/install-anti-slop-gleam/` | the install skill, its conventions, and a synced copy of `src/` |
-| `scripts/` | the skill sync and the check that the conventions mention every rule |
-| `dogfood/` | the agent trials that compare this dialect with the generic rules, and their results |
+```
+src/
+  index.ts       registers the rules
+  config.json    the config projects extend
+  rules/         one file per rule, with its tests beside it
+  shared/        small helpers the rules share
+docs/rules.md    what each rule does and why
+skills/          install skill for agents, with a copy of src/
+scripts/         keeps the skill copy and the conventions in sync
+dogfood/         trials where agents write code under these rules
+```
 
 ## Development
 
 ```bash
 pnpm install
-pnpm check
+pnpm check       # lint, test, typecheck, and sync checks
+pnpm sync:skill  # run after changing src/
 ```
 
-`pnpm check` lints `src/` with its own config, runs every rule's tests, typechecks, and verifies that the skill's copy of `src/` is current and that the conventions mention every enabled rule. After changing `src/`, run `pnpm sync:skill`.
+The rules' own source follows the dialect and is linted with `src/config.json`.
+
+## Origin
+
+This started as a fork of [dmmulroy/anti-slop](https://github.com/dmmulroy/anti-slop). The earlier general-purpose and Effect rules were removed; they are kept in git history under the `generic-rules` tag, and the dogfood trials use them as a comparison.
 
 ## License
 
