@@ -2,7 +2,7 @@
 
 Every rule here exists for the same reason: to make TypeScript code easier to follow by giving each problem one obvious solution. Each section says what the rule catches, why, and what to write instead.
 
-All rules skip boundary files (`*.ffi.ts`, explained in the [README](../README.md#boundary-files)). In test files, most of them are turned off; see [Tests](#tests) at the end.
+All rules skip IO files (`*.io.ts`, explained in the [README](../README.md#io-files)). In test files, most of them are turned off; see [Tests](#tests) at the end.
 
 - [no-throw](#no-throw)
 - [no-try-catch](#no-try-catch)
@@ -38,13 +38,13 @@ function findUser(id: UserId): Result<User, UserError> {
 }
 ```
 
-For a real bug, where the program should crash, call a `panic` helper defined in a boundary file.
+For a real bug, where the program should crash, call a `panic` helper defined in an IO file.
 
 ## no-try-catch
 
 **Catches:** `try` statements.
 
-**Why:** If nothing in the program throws, nothing needs catching. Foreign code still throws, so it gets wrapped once, in a boundary file, and the rest of the code only sees `Result` values.
+**Why:** If nothing in the program throws, nothing needs catching. Libraries and Node APIs still throw, so it gets wrapped once, in an IO file, and the rest of the code only sees `Result` values.
 
 ```ts
 // Rejected
@@ -52,14 +52,14 @@ try {
   const data = JSON.parse(text);
 } catch { ... }
 
-// Instead, in json.ffi.ts
+// Instead, in json.io.ts
 export function parseJson(text: string): Result<unknown, JsonError> {
   try { return ok(JSON.parse(text)); }
   catch (cause) { return err({ kind: "InvalidJson", cause }); }
 }
 ```
 
-A promise that might reject can be converted where you await it, with no boundary file:
+A promise that might reject can be converted where you await it, with no IO file:
 
 ```ts
 const response = await fetch(url).then(ok, (cause: unknown) => err({ kind: "NetworkError", cause }));
@@ -101,7 +101,7 @@ const addItem = (cart: Cart, item: Item): Cart => ({ items: [...cart.items, item
 
 The message changes with the case:
 - **A class that extends `Error`** should become a failure variant such as `{ kind: "NotFound", id }`, returned in a `Result`.
-- **A class a framework requires**, such as a web component, goes in a boundary file.
+- **A class a framework requires**, such as a web component, goes in an IO file.
 
 ## no-enums
 
@@ -228,7 +228,7 @@ function isExpired(session: Session) { return session.expiresAt < Date.now(); }
 function isExpired(session: Session, now: () => number) { return session.expiresAt < now(); }
 ```
 
-The real clock, `fetch`, and so on are created once, in the program's entry point (a boundary file), and passed in.
+The real clock, `fetch`, and so on are created once, in the program's entry point (an IO file), and passed in.
 
 **Allowed:** `new Date(value)` with an argument, which only parses a date. Type-only imports such as `import type { Stats } from "node:fs"` are also allowed.
 
@@ -252,7 +252,7 @@ const result = isExpired(session, () => 1_000);
 
 | Rule | What it does |
 |---|---|
-| `switch-exhaustiveness-check` | Every `switch` over a union handles every member, with no `default` hiding a missing one. Adding a new variant then shows every place that must handle it, like Gleam's `case`. |
+| `switch-exhaustiveness-check` | Every `switch` over a union handles every member, with no `default` hiding a missing one. Adding a new variant then shows every place that must handle it. |
 | `strict-boolean-expressions` | Conditions must be real booleans: write `text.length > 0`, not `text`. This avoids bugs where `0` or `""` counts as false. An optional boolean such as `context?.hasUI` is fine. |
 | `no-unsafe-*` | `any` must not spread. Parse untyped input with a schema library where it enters. |
 | `no-floating-promises`, `no-misused-promises` | Every promise is awaited or returned. |
@@ -262,7 +262,7 @@ The rest cover `throw` and `reject` with non-errors, and string building with va
 
 ## Tests
 
-Tests need things the dialect forbids. They repeat actions, use fakes that record calls, wait on real timers, and copy wire data that contains `null`. So in `*.test.*` and `*.spec.*` files these rules are off:
+Tests need things these rules forbid. They repeat actions, use fakes that record calls, wait on real timers, and copy wire data that contains `null`. So in `*.test.*` and `*.spec.*` files these rules are off:
 - `no-throw`
 - `no-try-catch`
 - `no-null`

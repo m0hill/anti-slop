@@ -1,13 +1,13 @@
 import { defineRule } from "@oxlint/plugins";
 
-import { isBoundaryFile } from "../shared/boundary.ts";
+import { isIoFile } from "../shared/io-file.ts";
 
-/** Use string literal or discriminated unions, which behave like Gleam custom types. */
+/** Use string literal or discriminated unions, which are plain data and work with exhaustive switches. */
 export const noEnumsRule = defineRule({
 	meta: {
 		type: "problem",
 		docs: {
-			description: "Disallow TypeScript enums outside `.ffi.ts` boundary modules.",
+			description: "Disallow TypeScript enums outside `.io.ts` files.",
 		},
 		messages: {
 			enum:
@@ -15,7 +15,7 @@ export const noEnumsRule = defineRule({
 		},
 	},
 	create(context) {
-		if (isBoundaryFile(context.filename)) return {};
+		if (isIoFile(context.filename)) return {};
 
 		return {
 			TSEnumDeclaration(node) {

@@ -11,9 +11,9 @@ import { noSharedMutationRule } from "./rules/no-shared-mutation.ts";
 import { noThrowRule } from "./rules/no-throw.ts";
 import { noTryCatchRule } from "./rules/no-try-catch.ts";
 
-/** Oxlint rules that restrict TypeScript to a small, Gleam-like dialect. */
-const gleamPlugin = eslintCompatPlugin({
-	meta: { name: "gleam" },
+/** Oxlint rules that keep TypeScript in a small, functional style. */
+const fpPlugin = eslintCompatPlugin({
+	meta: { name: "fp" },
 	rules: {
 		"no-ambient-capabilities": noAmbientCapabilitiesRule,
 		"no-classes": noClassesRule,
@@ -28,4 +28,4 @@ const gleamPlugin = eslintCompatPlugin({
 	},
 });
 
-export default gleamPlugin;
+export default fpPlugin;

@@ -3,10 +3,10 @@ import { RuleTester } from "oxlint/plugins-dev";
 import { noAmbientCapabilitiesRule } from "./no-ambient-capabilities.ts";
 
 const tester = new RuleTester({ languageOptions: { parserOptions: { lang: "ts" } } });
-const boundary = "src/main.ffi.ts";
+const ioFile = "src/main.io.ts";
 const error = { messageId: "ambient" };
 
-tester.run("gleam/no-ambient-capabilities", noAmbientCapabilitiesRule, {
+tester.run("fp/no-ambient-capabilities", noAmbientCapabilitiesRule, {
 	valid: [
 		"export function sync(fetch: typeof fetch, url: string) { return fetch(url); }",
 		"export function stamp(now: () => Date) { return now().toISOString(); }",
@@ -17,7 +17,7 @@ tester.run("gleam/no-ambient-capabilities", noAmbientCapabilitiesRule, {
 		"import type { Stats } from \"node:fs\";",
 		"import { z } from \"zod\";",
 		"const random = seeded.random();",
-		{ filename: boundary, code: "import { readFile } from \"node:fs/promises\"; run({ fetch, now: () => new Date(), random: Math.random, env: process.env });" },
+		{ filename: ioFile, code: "import { readFile } from \"node:fs/promises\"; run({ fetch, now: () => new Date(), random: Math.random, env: process.env });" },
 	],
 	invalid: [
 		{ code: "const response = await fetch(url);", errors: [{ ...error, data: { name: "fetch", capability: "the network" } }] },

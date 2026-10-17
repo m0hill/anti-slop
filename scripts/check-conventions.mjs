@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const configPath = "src/config.json";
-const conventionsPath = "skills/install-anti-slop-gleam/references/conventions.md";
+const conventionsPath = "skills/install-fp-rules/references/conventions.md";
 
 const config = JSON.parse(readFileSync(join(root, configPath), "utf8"));
 const conventions = readFileSync(join(root, conventionsPath), "utf8");

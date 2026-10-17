@@ -3,12 +3,12 @@ import { RuleTester } from "oxlint/plugins-dev";
 import { noEnumsRule } from "./no-enums.ts";
 
 const tester = new RuleTester({ languageOptions: { parserOptions: { lang: "ts" } } });
-const boundary = "src/clock.ffi.ts";
+const ioFile = "src/clock.io.ts";
 
-tester.run("gleam/no-enums", noEnumsRule, {
+tester.run("fp/no-enums", noEnumsRule, {
 	valid: [
 		"type Status = \"active\" | \"suspended\";",
-		{ filename: boundary, code: "export enum ForeignStatus { Active }" },
+		{ filename: ioFile, code: "export enum ForeignStatus { Active }" },
 	],
 	invalid: [
 		{ code: "enum Status { Active, Suspended }", errors: [{ messageId: "enum" }] },

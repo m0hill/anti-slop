@@ -44,7 +44,7 @@ function passesCheck(directory) {
 }
 
 const PROBE = /probe|scratch/i;
-const RULE = String.raw`(?:anti-slop[a-z-]*|gleam|oxc|typescript)\([a-z-]+\)`;
+const RULE = String.raw`(?:anti-slop[a-z-]*|fp|oxc|typescript)\([a-z-]+\)`;
 // Oxlint prints one line per diagnostic without a terminal, and a block with `--format default`.
 const ONE_LINE = new RegExp(String.raw`(?<file>src\/\S+?\.ts):\d+:\d+: error (?<rule>${RULE})`, "g");
 const BLOCK = new RegExp(String.raw`x (?<rule>${RULE}):[^\n]*\n\s*,-\[(?<file>src\/\S+?\.ts):\d+:\d+\]`, "g");
@@ -90,7 +90,7 @@ function measure(directory) {
     lintRuns: logs.length,
     violations,
     lines: source.split("\n").length,
-    ffiFiles: files.filter((path) => path.includes(".ffi.")).length,
+    ioFiles: files.filter((path) => path.includes(".io.")).length,
     counts: Object.fromEntries(Object.entries(patterns).map(([name, pattern]) => [name, source.match(pattern)?.length ?? 0])),
     costUsd: transcript.total_cost_usd ?? 0,
     tokens: (transcript.usage?.input_tokens ?? 0) + (transcript.usage?.output_tokens ?? 0),
@@ -100,7 +100,7 @@ function measure(directory) {
 const trials = readdirSync(root, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .map((entry) => {
-    const match = /^(.+)-(generic|gleam)-(\d+)$/.exec(entry.name);
+    const match = /^(.+)-(generic|fp)-(\d+)$/.exec(entry.name);
     return match && { task: match[1], arm: match[2], metrics: measure(join(root, entry.name)) };
   })
   .filter(Boolean);
@@ -116,12 +116,12 @@ const format = (value) => (Number.isInteger(value) ? String(value) : value.toFix
 const ratio = (items, test) => `${items.filter(test).length}/${items.length}`;
 const total = (items) => items.map((item) => Object.values(item.violations).reduce((sum, n) => sum + n, 0));
 
-const header = ["task", "rules", "finished", "check passes", "config untouched", "probed", "lint runs", "violations", "source lines", "ffi files", ...Object.keys(patterns), "cost (USD)", "tokens (k)"];
+const header = ["task", "rules", "finished", "check passes", "config untouched", "probed", "lint runs", "violations", "source lines", "io files", ...Object.keys(patterns), "cost (USD)", "tokens (k)"];
 const rows = [...groups].sort(([a], [b]) => a.localeCompare(b)).map(([key, items]) => {
   const [task, arm] = key.split("\t");
   return [
     task,
-    arm === "generic" ? "generic" : "Gleam",
+    arm,
     ratio(items, (item) => item.finished),
     ratio(items, (item) => item.passes),
     ratio(items, (item) => item.untouched),
@@ -129,7 +129,7 @@ const rows = [...groups].sort(([a], [b]) => a.localeCompare(b)).map(([key, items
     format(mean(items.map((item) => item.lintRuns))),
     format(mean(total(items))),
     format(mean(items.map((item) => item.lines))),
-    format(mean(items.map((item) => item.ffiFiles))),
+    format(mean(items.map((item) => item.ioFiles))),
     ...Object.keys(patterns).map((name) => format(mean(items.map((item) => item.counts[name])))),
     mean(items.map((item) => item.costUsd)).toFixed(2),
     (mean(items.map((item) => item.tokens)) / 1000).toFixed(0),
@@ -139,13 +139,13 @@ const rows = [...groups].sort(([a], [b]) => a.localeCompare(b)).map(([key, items
 const byRule = {};
 for (const trial of trials) {
   for (const [rule, count] of Object.entries(trial.metrics.violations)) {
-    byRule[rule] ??= { generic: 0, gleam: 0 };
+    byRule[rule] ??= { generic: 0, fp: 0 };
     byRule[rule][trial.arm] += count;
   }
 }
 const ruleRows = Object.entries(byRule)
-  .sort(([, a], [, b]) => b.generic + b.gleam - (a.generic + a.gleam))
-  .map(([rule, counts]) => [rule, String(counts.generic), String(counts.gleam)]);
+  .sort(([, a], [, b]) => b.generic + b.fp - (a.generic + a.fp))
+  .map(([rule, counts]) => [rule, String(counts.generic), String(counts.fp)]);
 
 const table = (head, body) =>
   [`| ${head.join(" | ")} |`, `|${head.map(() => "---").join("|")}|`, ...body.map((row) => `| ${row.join(" | ")} |`)].join("\n");
@@ -159,7 +159,7 @@ const report = [
   "",
   "## Violations by rule, summed over every recorded lint run",
   "",
-  table(["rule", "generic", "Gleam"], ruleRows),
+  table(["rule", "generic", "fp"], ruleRows),
   "",
 ].join("\n");
 

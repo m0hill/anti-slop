@@ -3,15 +3,15 @@ import { RuleTester } from "oxlint/plugins-dev";
 import { noLoopsRule } from "./no-loops.ts";
 
 const tester = new RuleTester({ languageOptions: { parserOptions: { lang: "ts" } } });
-const boundary = "src/clock.ffi.ts";
+const ioFile = "src/clock.io.ts";
 
 const error = { messageId: "loop" };
 
-tester.run("gleam/no-loops", noLoopsRule, {
+tester.run("fp/no-loops", noLoopsRule, {
 	valid: [
 		"for (const item of items) use(item);",
 		"const emails = users.map(user => user.email);",
-		{ filename: boundary, code: "while (stream.hasNext()) read(stream.next());" },
+		{ filename: ioFile, code: "while (stream.hasNext()) read(stream.next());" },
 	],
 	invalid: [
 		{ code: "while (ready()) step();", errors: [error] },

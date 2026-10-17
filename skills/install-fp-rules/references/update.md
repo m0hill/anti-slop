@@ -1,6 +1,6 @@
 # Update a vendored installation
 
-Use this procedure for an existing anti-slop-gleam installation. Local edits are owned policy, not drift to erase. An update is a reviewed merge, not a directory replacement.
+Use this procedure for an existing fp installation. Local edits are owned policy, not drift to erase. An update is a reviewed merge, not a directory replacement.
 
 ## 1. Establish scope and protect local work
 
@@ -77,11 +77,12 @@ Check incoming API requirements against the installed `oxlint` and `@oxlint/plug
 
 Complete when every adopted rule is reachable through the intended entry point, configuration reflects approved policy, and the dependency pair supports the merged implementation.
 
-### Installations from the combined anti-slop plugin
+### Installations from the older anti-slop plugin
 
-Older installations copied one tree with a generic `anti-slop` plugin, an optional `anti-slop-effect` plugin, and the dialect as `anti-slop-gleam`, enabled through `configs/recommended.json` and `configs/gleam.json`. This project now ships only the dialect, as the plugin `gleam`, with one `config.json` that also enables the type-aware `typescript/*` rules. When migrating such an installation:
+Older installations copied one tree with a generic `anti-slop` plugin, an optional `anti-slop-effect` plugin, and the functional rules as `anti-slop-gleam`, enabled through `configs/recommended.json` and `configs/gleam.json`. This project now ships only those rules, as the plugin `fp`, with one `config.json` that also enables the type-aware `typescript/*` rules. When migrating such an installation:
 
-- Rename rule ids from `anti-slop-gleam/<rule>` to `gleam/<rule>` in configuration, overrides, and suppression comments. `anti-slop/no-module-mocking` becomes `gleam/no-module-mocking`.
+- Rename rule ids from `anti-slop-gleam/<rule>` to `fp/<rule>` in configuration, overrides, and suppression comments. `anti-slop/no-module-mocking` becomes `fp/no-module-mocking`.
+- Rename `*.ffi.ts` files to `*.io.ts`; the rules now skip `*.io.*` files instead of `*.ffi.*`.
 - Ask whether to keep the generic and Effect rules. If the user keeps them, leave their vendored files and configuration in place as local rules; do not delete them as part of the update.
 - Replace `extends` entries for `configs/recommended.json` and `configs/gleam.json` with `config.json`, keeping local overrides.
 

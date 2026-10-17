@@ -1,5 +1,5 @@
 #!/bin/sh
-# Run a batch of trials: every task under both rule sets (generic and gleam), several times each.
+# Run a batch of trials: every task under both rule sets (generic and fp), several times each.
 # Usage: dogfood/run.sh <round> <runs> <task>...
 # Environment: DOGFOOD_ROOT (default /tmp/dogfood), DOGFOOD_AGENT (claude or codex, default claude),
 #              DOGFOOD_MODEL (default haiku for claude, gpt-6-luna for codex), DOGFOOD_PARALLEL (default 6).
@@ -19,7 +19,7 @@ mkdir -p "$root"
 
 for task in "$@"; do
   [ -f "$dogfood/tasks/$task.md" ] || { echo "No task $dogfood/tasks/$task.md" >&2; exit 1; }
-  for arm in generic gleam; do
+  for arm in generic fp; do
     run=1
     while [ "$run" -le "$runs" ]; do
       directory=$root/$task-$arm-$run

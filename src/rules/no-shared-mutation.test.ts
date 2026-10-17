@@ -3,10 +3,10 @@ import { RuleTester } from "oxlint/plugins-dev";
 import { noSharedMutationRule } from "./no-shared-mutation.ts";
 
 const tester = new RuleTester({ languageOptions: { parserOptions: { lang: "ts" } } });
-const boundary = "src/clock.ffi.ts";
+const ioFile = "src/clock.io.ts";
 const mutation = (name: string, owner: string) => ({ messageId: "sharedMutation", data: { name, owner } });
 
-tester.run("gleam/no-shared-mutation", noSharedMutationRule, {
+tester.run("fp/no-shared-mutation", noSharedMutationRule, {
 	valid: [
 		"function collect(users: readonly User[]) { const emails: string[] = []; for (const user of users) emails.push(user.email); return emails; }",
 		"function count(words: readonly string[]) { const counts = new Map<string, number>(); for (const word of words) counts.set(word, (counts.get(word) ?? 0) + 1); return counts; }",
@@ -18,7 +18,7 @@ tester.run("gleam/no-shared-mutation", noSharedMutationRule, {
 		"function save(cache: Cache, key: string, value: string) { cache.set(key, value); }",
 		"function log(logger: Logger) { logger.info(\"saved\"); }",
 		"function f(Object: Assigner, user: User) { Object.assign(user, {}); }",
-		{ filename: boundary, code: "export function reset(buffer: number[]) { buffer.length = 0; buffer.push(1); }" },
+		{ filename: ioFile, code: "export function reset(buffer: number[]) { buffer.length = 0; buffer.push(1); }" },
 	],
 	invalid: [
 		{ code: "function rename(user: User, name: string) { user.name = name; }", errors: [mutation("user", "a parameter")] },

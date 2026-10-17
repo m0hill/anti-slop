@@ -5,9 +5,9 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const skillRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const source = resolve(skillRoot, "assets/anti-slop-gleam");
+const source = resolve(skillRoot, "assets/fp");
 const options = process.argv.slice(2);
-const destination = resolve(process.cwd(), options.find((option) => !option.startsWith("--")) ?? "tools/oxlint/anti-slop-gleam");
+const destination = resolve(process.cwd(), options.find((option) => !option.startsWith("--")) ?? "tools/oxlint/fp");
 const force = options.includes("--force");
 
 if (existsSync(destination) && !force) {

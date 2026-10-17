@@ -1,6 +1,6 @@
 import { defineRule } from "@oxlint/plugins";
 
-import { isBoundaryFile } from "../shared/boundary.ts";
+import { isIoFile } from "../shared/io-file.ts";
 
 const EQUALITY_OPERATORS = new Set(["===", "!==", "==", "!="]);
 
@@ -9,15 +9,15 @@ export const noNullRule = defineRule({
 	meta: {
 		type: "problem",
 		docs: {
-			description: "Disallow null values and types outside `.ffi.ts` boundary modules; comparisons that narrow foreign null results remain valid.",
+			description: "Disallow null values and types outside `.io.ts` files; comparisons that narrow foreign null results remain valid.",
 		},
 		messages: {
 			null:
-				"Do not write `null` values or types. Model absence as `undefined` in an explicit union, or as a Result error when absence is a failure. Convert a foreign `null` where it arrives (`headers.get(name) ?? undefined`) or narrow it with `value === null`; both are valid without a `.ffi.ts` boundary module.",
+				"Do not write `null` values or types. Model absence as `undefined` in an explicit union, or as a Result error when absence is a failure. Convert a foreign `null` where it arrives (`headers.get(name) ?? undefined`) or narrow it with `value === null`; both are valid without an `.io.ts` file.",
 		},
 	},
 	create(context) {
-		if (isBoundaryFile(context.filename)) return {};
+		if (isIoFile(context.filename)) return {};
 
 		return {
 			Literal(node) {

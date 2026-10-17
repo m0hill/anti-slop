@@ -3,12 +3,12 @@ import { RuleTester } from "oxlint/plugins-dev";
 import { noThrowRule } from "./no-throw.ts";
 
 const tester = new RuleTester({ languageOptions: { parserOptions: { lang: "ts" } } });
-const boundary = "src/clock.ffi.ts";
+const ioFile = "src/clock.io.ts";
 
-tester.run("gleam/no-throw", noThrowRule, {
+tester.run("fp/no-throw", noThrowRule, {
 	valid: [
 		"function find(id: string): Result<User, NotFound> { return { ok: false, error: { kind: \"NotFound\", id } }; }",
-		{ filename: boundary, code: "export function panic(reason: string): never { throw new Error(reason); }" },
+		{ filename: ioFile, code: "export function panic(reason: string): never { throw new Error(reason); }" },
 	],
 	invalid: [
 		{ code: "function find(id: string) { throw new Error(id); }", errors: [{ messageId: "throw" }] },

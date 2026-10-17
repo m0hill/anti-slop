@@ -3,13 +3,13 @@ import { RuleTester } from "oxlint/plugins-dev";
 import { noClassesRule } from "./no-classes.ts";
 
 const tester = new RuleTester({ languageOptions: { parserOptions: { lang: "ts" } } });
-const boundary = "src/clock.ffi.ts";
+const ioFile = "src/clock.io.ts";
 
-tester.run("gleam/no-classes", noClassesRule, {
+tester.run("fp/no-classes", noClassesRule, {
 	valid: [
 		"type User = { readonly name: string }; export function rename(user: User, name: string): User { return { ...user, name }; }",
 		"type Fluent = { next(): this };",
-		{ filename: boundary, code: "export class ClockError extends Error { constructor() { super(); this.name = \"ClockError\"; } }" },
+		{ filename: ioFile, code: "export class ClockError extends Error { constructor() { super(); this.name = \"ClockError\"; } }" },
 	],
 	invalid: [
 		{ code: "class User { constructor(readonly name: string) {} }", errors: [{ messageId: "class" }] },

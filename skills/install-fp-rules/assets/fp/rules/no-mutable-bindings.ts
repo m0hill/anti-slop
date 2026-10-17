@@ -1,7 +1,7 @@
 import { defineRule } from "@oxlint/plugins";
 
 import { resolveVariable } from "../shared/scope.ts";
-import { isBoundaryFile } from "../shared/boundary.ts";
+import { isIoFile } from "../shared/io-file.ts";
 
 import type { ESTree, Scope, Variable } from "@oxlint/plugins";
 
@@ -27,7 +27,7 @@ export const noMutableBindingsRule = defineRule({
 	meta: {
 		type: "problem",
 		docs: {
-			description: "Disallow let, var, and reassignment of bindings outside `.ffi.ts` boundary modules.",
+			description: "Disallow let, var, and reassignment of bindings outside `.io.ts` files.",
 		},
 		messages: {
 			mutableDeclaration:
@@ -39,7 +39,7 @@ export const noMutableBindingsRule = defineRule({
 		},
 	},
 	create(context) {
-		if (isBoundaryFile(context.filename)) return {};
+		if (isIoFile(context.filename)) return {};
 
 		const sourceCode = context.sourceCode;
 		// One report per scope: the fix for all of a scope's state is one `state` object.

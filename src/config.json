@@ -4,21 +4,21 @@
   },
   "jsPlugins": [
     {
-      "name": "gleam",
+      "name": "fp",
       "specifier": "./index.ts"
     }
   ],
   "rules": {
-    "gleam/no-ambient-capabilities": "error",
-    "gleam/no-classes": "error",
-    "gleam/no-enums": "error",
-    "gleam/no-loops": "error",
-    "gleam/no-module-mocking": "error",
-    "gleam/no-mutable-bindings": "error",
-    "gleam/no-null": "error",
-    "gleam/no-shared-mutation": "error",
-    "gleam/no-throw": "error",
-    "gleam/no-try-catch": "error",
+    "fp/no-ambient-capabilities": "error",
+    "fp/no-classes": "error",
+    "fp/no-enums": "error",
+    "fp/no-loops": "error",
+    "fp/no-module-mocking": "error",
+    "fp/no-mutable-bindings": "error",
+    "fp/no-null": "error",
+    "fp/no-shared-mutation": "error",
+    "fp/no-throw": "error",
+    "fp/no-try-catch": "error",
     "typescript/await-thenable": "error",
     "typescript/no-base-to-string": "error",
     "typescript/no-floating-promises": [
@@ -73,13 +73,13 @@
         "**/*.spec.*"
       ],
       "rules": {
-        "gleam/no-ambient-capabilities": "off",
-        "gleam/no-loops": "off",
-        "gleam/no-mutable-bindings": "off",
-        "gleam/no-null": "off",
-        "gleam/no-shared-mutation": "off",
-        "gleam/no-throw": "off",
-        "gleam/no-try-catch": "off"
+        "fp/no-ambient-capabilities": "off",
+        "fp/no-loops": "off",
+        "fp/no-mutable-bindings": "off",
+        "fp/no-null": "off",
+        "fp/no-shared-mutation": "off",
+        "fp/no-throw": "off",
+        "fp/no-try-catch": "off"
       }
     },
     {

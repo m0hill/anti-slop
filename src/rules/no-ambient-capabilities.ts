@@ -1,7 +1,7 @@
 import { defineRule } from "@oxlint/plugins";
 
 import { isGlobalIdentifier } from "../shared/scope.ts";
-import { isBoundaryFile } from "../shared/boundary.ts";
+import { isIoFile } from "../shared/io-file.ts";
 
 import type { ESTree } from "@oxlint/plugins";
 
@@ -64,15 +64,15 @@ export const noAmbientCapabilitiesRule = defineRule({
 		type: "problem",
 		docs: {
 			description:
-				"Disallow direct use of the clock, randomness, timers, network, process environment, and I/O modules outside `.ffi.ts` boundary modules.",
+				"Disallow direct use of the clock, randomness, timers, network, process environment, and I/O modules outside `.io.ts` files.",
 		},
 		messages: {
 			ambient:
-				"`{{name}}` reads {{capability}} directly, so callers and tests cannot control it. Take it as a parameter (for example `now: () => Date`, `fetch: typeof fetch`, `sleep: (ms: number) => Promise<void>`) and pass the real one in from a `.ffi.ts` module, such as the program's entry point.",
+				"`{{name}}` reads {{capability}} directly, so callers and tests cannot control it. Take it as a parameter (for example `now: () => Date`, `fetch: typeof fetch`, `sleep: (ms: number) => Promise<void>`) and pass the real one in from an `.io.ts` file, such as the program's entry point.",
 		},
 	},
 	create(context) {
-		if (isBoundaryFile(context.filename)) return {};
+		if (isIoFile(context.filename)) return {};
 		const { sourceCode } = context;
 
 		const reportModule = (node: ESTree.Node, source: ESTree.Node) => {

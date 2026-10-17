@@ -3,11 +3,11 @@ import { RuleTester } from "oxlint/plugins-dev";
 import { noNullRule } from "./no-null.ts";
 
 const tester = new RuleTester({ languageOptions: { parserOptions: { lang: "ts" } } });
-const boundary = "src/clock.ffi.ts";
+const ioFile = "src/clock.io.ts";
 
 const error = { messageId: "null" };
 
-tester.run("gleam/no-null", noNullRule, {
+tester.run("fp/no-null", noNullRule, {
 	valid: [
 		"const name: string | undefined = undefined;",
 		"const label = \"null\";",
@@ -16,7 +16,7 @@ tester.run("gleam/no-null", noNullRule, {
 		"const match = pattern.exec(text); if (match === null) skip();",
 		"if (null != value) use(value);",
 		"const header = headers.get(name) ?? undefined;",
-		{ filename: boundary, code: "export function find(id: string): User | undefined { return lookup(id) ?? undefined; } const empty: string | null = null;" },
+		{ filename: ioFile, code: "export function find(id: string): User | undefined { return lookup(id) ?? undefined; } const empty: string | null = null;" },
 	],
 	invalid: [
 		{ code: "const name = null;", errors: [error] },

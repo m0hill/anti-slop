@@ -3,19 +3,19 @@ import { RuleTester } from "oxlint/plugins-dev";
 import { noMutableBindingsRule } from "./no-mutable-bindings.ts";
 
 const tester = new RuleTester({ languageOptions: { parserOptions: { lang: "ts" } } });
-const boundary = "src/clock.ffi.ts";
+const ioFile = "src/clock.io.ts";
 
 const declaration = (kind: string) => ({ messageId: "mutableDeclaration", data: { kind } });
 const reassignment = { messageId: "reassignment" };
 const captured = (names: string) => ({ messageId: "capturedState", data: { names } });
 
-tester.run("gleam/no-mutable-bindings", noMutableBindingsRule, {
+tester.run("fp/no-mutable-bindings", noMutableBindingsRule, {
 	valid: [
 		"const total = items.length;",
 		"for (const item of items) use(item);",
 		"user.name = name;",
 		"counts[key] += 1;",
-		{ filename: boundary, code: "let attempts = 0; attempts++;" },
+		{ filename: ioFile, code: "let attempts = 0; attempts++;" },
 	],
 	invalid: [
 		{ code: "let total = 0;", errors: [declaration("let")] },

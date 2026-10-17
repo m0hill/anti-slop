@@ -1,6 +1,6 @@
 ## TypeScript conventions
 
-This project's lint rules restrict TypeScript to a small dialect modeled on Gleam. These are its building blocks.
+This project's lint rules keep TypeScript in a functional style: failures are values, data is never changed in place, and side effects stay at the edges. These are its building blocks.
 
 ### Results and failures
 
@@ -26,10 +26,10 @@ This project's lint rules restrict TypeScript to a small dialect modeled on Glea
 - Pass state in and return the new state. Update with spreads (`{ ...book, status }`), `toSorted`, and `new Map([...map, [key, value]])`; build a local `const` value when that reads better.
 - Keep state that callbacks or event handlers change over time, such as a server handle or a session flag, in one `const state = { ... }` object owned by the function that registers them, and change it only through that object. Keep the decisions about the next state in plain functions that take the old state and return the new one.
 
-### Effects and foreign code
+### Side effects and foreign code
 
-- Take the clock, randomness, timers, network, environment, and file access as parameters (`now: () => Date`, `fetch: typeof fetch`, `sleep: (ms: number) => Promise<void>`). Create the real ones in a `.ffi.ts` entry point and pass them in; tests pass fakes.
-- Wrap foreign code that throws, returns `null`, or needs a class in a thin `*.ffi.ts` module that returns `Result` or `undefined`. When a framework expects a thrown error, such as a tool or route handler, keep the logic returning a `Result` and throw once, in a small `.ffi.ts` helper that unwraps it. Keep domain logic out of `.ffi.ts` files; the dialect's rules do not check them.
+- Take the clock, randomness, timers, network, environment, and file access as parameters (`now: () => Date`, `fetch: typeof fetch`, `sleep: (ms: number) => Promise<void>`). Create the real ones in an `.io.ts` entry point and pass them in; tests pass fakes.
+- Wrap foreign code that throws, returns `null`, or needs a class in a thin `*.io.ts` file that returns `Result` or `undefined`. When a framework expects a thrown error, such as a tool or route handler, keep the logic returning a `Result` and throw once, in a small `.io.ts` helper that unwraps it. Keep domain logic out of `.io.ts` files; the lint rules do not check them.
 
 ### Repetition
 
@@ -46,7 +46,7 @@ This project's lint rules restrict TypeScript to a small dialect modeled on Glea
 
 Read this list instead of writing throwaway files to discover the rules.
 
-- Dialect, outside `*.ffi.*` files: `no-throw` (return a `Result`), `no-try-catch` (wrap throwing code in a `.ffi.ts` module), `no-null` (use `undefined`), `no-classes` (types plus functions; `Error` subclasses become failure variants, and classes a framework requires go in `.ffi.ts`), `no-enums` (string literal unions), `no-loops` (collection methods, `for...of`, or bounded recursion), `no-mutable-bindings` (`const` only; long-lived state goes in one `state` object), `no-shared-mutation` (return new values instead of changing parameters, imports, or module state), and `no-ambient-capabilities` (take the clock, randomness, timers, `fetch`, `process`, and file access as parameters).
+- Functional style, outside `*.io.*` files: `no-throw` (return a `Result`), `no-try-catch` (wrap throwing code in an `.io.ts` file), `no-null` (use `undefined`), `no-classes` (types plus functions; `Error` subclasses become failure variants, and classes a framework requires go in `.io.ts`), `no-enums` (string literal unions), `no-loops` (collection methods, `for...of`, or bounded recursion), `no-mutable-bindings` (`const` only; long-lived state goes in one `state` object), `no-shared-mutation` (return new values instead of changing parameters, imports, or module state), and `no-ambient-capabilities` (take the clock, randomness, timers, `fetch`, `process`, and file access as parameters).
 - Tests: `no-module-mocking` rejects `vi.mock` and `jest.mock`; pass fakes through parameters.
 - Untyped data: `no-unsafe-argument`, `no-unsafe-assignment`, `no-unsafe-call`, `no-unsafe-member-access`, `no-unsafe-return`, `no-redundant-type-constituents`. Parse with the schema where data enters; pass parsed types onward, never `any`.
 - Conditions: `strict-boolean-expressions` requires booleans in conditions (`text.length > 0`, `value !== undefined`); an optional boolean such as `context?.hasUI` is allowed. `no-unnecessary-condition` rejects checks the types already rule out, and `no-unnecessary-type-assertion` rejects assertions that change nothing.

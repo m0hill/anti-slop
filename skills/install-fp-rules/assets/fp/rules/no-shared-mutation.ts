@@ -1,7 +1,7 @@
 import { defineRule } from "@oxlint/plugins";
 
 import { isGlobalIdentifier, resolveVariable } from "../shared/scope.ts";
-import { isBoundaryFile } from "../shared/boundary.ts";
+import { isIoFile } from "../shared/io-file.ts";
 
 import type { ESTree } from "@oxlint/plugins";
 
@@ -31,7 +31,7 @@ export const noSharedMutationRule = defineRule({
 		type: "problem",
 		docs: {
 			description:
-				"Disallow in-place mutation of parameters, imports, and module-level bindings outside `.ffi.ts` boundary modules.",
+				"Disallow in-place mutation of parameters, imports, and module-level bindings outside `.io.ts` files.",
 		},
 		messages: {
 			sharedMutation:
@@ -39,7 +39,7 @@ export const noSharedMutationRule = defineRule({
 		},
 	},
 	create(context) {
-		if (isBoundaryFile(context.filename)) return {};
+		if (isIoFile(context.filename)) return {};
 
 		const sharedOwner = (identifier: ESTree.IdentifierReference): string | undefined => {
 			const variable = resolveVariable(context.sourceCode, identifier);

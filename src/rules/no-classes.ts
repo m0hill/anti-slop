@@ -1,6 +1,6 @@
 import { defineRule } from "@oxlint/plugins";
 
-import { isBoundaryFile } from "../shared/boundary.ts";
+import { isIoFile } from "../shared/io-file.ts";
 
 import type { ESTree } from "@oxlint/plugins";
 
@@ -18,12 +18,12 @@ function baseName(superClass: ESTree.Expression): string | undefined {
 	return undefined;
 }
 
-/** Model data with types and behavior with module functions, as Gleam does. */
+/** Model data with types and behavior with module functions. */
 export const noClassesRule = defineRule({
 	meta: {
 		type: "problem",
 		docs: {
-			description: "Disallow classes and `this` outside `.ffi.ts` boundary modules.",
+			description: "Disallow classes and `this` outside `.io.ts` files.",
 		},
 		messages: {
 			class:
@@ -31,12 +31,12 @@ export const noClassesRule = defineRule({
 			errorClass:
 				"Model expected failures as data, not `Error` subclasses: a union variant such as `{ kind: \"NotFound\", id }` returned in a `Result`, plus a function that describes it when a message is needed.",
 			foreignClass:
-				"This class extends `{{base}}`, which a platform or library API requires. Move it into a thin `.ffi.ts` or `.ffi.tsx` module whose methods call plain functions.",
+				"This class extends `{{base}}`, which a platform or library API requires. Move it into a thin `.io.ts` or `.io.tsx` file whose methods call plain functions.",
 			this: "Pass the value as an explicit parameter instead of reading `this`.",
 		},
 	},
 	create(context) {
-		if (isBoundaryFile(context.filename)) return {};
+		if (isIoFile(context.filename)) return {};
 
 		const reportClass = (node: ESTree.Class) => {
 			const base = node.superClass === null ? undefined : baseName(node.superClass);

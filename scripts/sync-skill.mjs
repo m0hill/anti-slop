@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const source = join(root, "src");
-const destination = join(root, "skills/install-anti-slop-gleam/assets/anti-slop-gleam");
+const destination = join(root, "skills/install-fp-rules/assets/fp");
 const isShipped = (path) => !path.endsWith(".test.ts");
 
 // Shipped files under `base`, as paths relative to it.

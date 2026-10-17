@@ -1,8 +1,8 @@
 {
-  "name": "anti-slop-gleam",
+  "name": "fp",
   "version": "0.1.0",
   "private": true,
-  "description": "Oxlint rules that restrict TypeScript to a small, Gleam-like dialect for coding agents.",
+  "description": "Oxlint rules that keep TypeScript in a small, functional style, for coding agents.",
   "type": "module",
   "exports": "./src/index.ts",
   "files": [

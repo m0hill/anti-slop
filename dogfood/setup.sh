@@ -1,7 +1,7 @@
 #!/bin/sh
 # Create a scratch trial project.
-# Usage: dogfood/setup.sh <directory> <generic|gleam>
-#   gleam    lints with this checkout's config and gets its conventions as AGENTS.md.
+# Usage: dogfood/setup.sh <directory> <generic|fp>
+#   fp       lints with this checkout's config and gets its conventions as AGENTS.md.
 #   generic  lints with the generic anti-slop rules this project replaced, read from git at
 #            $DOGFOOD_GENERIC_REF (default: the generic-rules tag), and gets their conventions.
 set -eu
@@ -12,9 +12,9 @@ rm -rf "$directory"
 mkdir -p "$directory/src" "$directory/.trial"
 
 case $arm in
-  gleam)
+  fp)
     config=$repo/src/config.json
-    conventions=$repo/skills/install-anti-slop-gleam/references/conventions.md
+    conventions=$repo/skills/install-fp-rules/references/conventions.md
     ;;
   generic)
     ref=${DOGFOOD_GENERIC_REF:-generic-rules}
@@ -27,7 +27,7 @@ case $arm in
     config=$generic/src/configs/recommended.json
     conventions=$generic/skills/install-anti-slop/references/agent-conventions.md
     ;;
-  *) echo "The rule set must be generic or gleam" >&2; exit 1 ;;
+  *) echo "The rule set must be generic or fp" >&2; exit 1 ;;
 esac
 echo "{ \"extends\": [\"$config\"] }" > "$directory/.oxlintrc.json"
 cp "$conventions" "$directory/AGENTS.md"

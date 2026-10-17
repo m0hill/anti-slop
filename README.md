@@ -1,6 +1,6 @@
-# anti-slop-gleam
+# fp
 
-Lint rules that make TypeScript look like [Gleam](https://gleam.run): a small language with one clear way to do each thing.
+Lint rules that keep TypeScript in a simple, functional style.
 
 ## Why
 
@@ -10,10 +10,10 @@ Coding agents write TypeScript fast, but TypeScript offers many ways to do the s
 - objects changed behind your back;
 - code that quietly reads the clock or the network.
 
-These rules remove those options. What is left is a small dialect:
+These rules remove those options and leave the core ideas of functional programming:
 - **Failures are values.** Functions return a `Result` instead of throwing, so the type says what can go wrong.
-- **Data is plain.** Types and unions instead of classes and enums. Values are never changed in place; you make a new one.
-- **Inputs are visible.** The clock, randomness, network, and files are passed in as parameters, so every function can be tested with fakes.
+- **Data is immutable.** Types and unions instead of classes and enums. Values are never changed in place; you make a new one.
+- **Side effects stay at the edges.** The clock, randomness, network, and files are passed in as parameters. Most code is then pure: the same input always gives the same output, and tests need no mocks.
 - **One way to repeat.** Collection methods and `for...of`. Repeat-until work uses recursion with a limit.
 
 Every lint message says what to write instead, so an agent that breaks a rule learns the fix right away.
@@ -23,7 +23,7 @@ Every lint message says what to write instead, so an agent that breaks a rule le
 | Rule | Bans | Use instead |
 |---|---|---|
 | `no-throw` | `throw` | return a `Result` |
-| `no-try-catch` | `try` | wrap throwing code once, in a boundary file |
+| `no-try-catch` | `try` | wrap throwing code once, in an IO file |
 | `no-null` | `null` | `undefined` |
 | `no-classes` | classes, `this` | types and functions |
 | `no-enums` | `enum` | string unions |
@@ -37,17 +37,17 @@ The config also turns on Oxlint's type-aware TypeScript rules, for example the o
 
 **[docs/rules.md](docs/rules.md)** explains each rule with examples.
 
-## Boundary files
+## IO files
 
-Real programs still have to call code that throws, returns `null`, or needs a class. That code goes in files named `*.ffi.ts`, which the rules skip. ("FFI" means foreign function interface; Gleam uses the same idea for calling other languages.)
+Real programs still have to call code that throws, returns `null`, or needs a class, and something has to actually read the clock and talk to the network. That code goes in files named `*.io.ts`, which the rules skip. This is the "functional core, imperative shell" idea: a pure core, with a thin layer around it that does the side effects.
 
-A boundary file is a thin wrapper. It calls the foreign API, catches its errors, and exports plain functions that return `Result` or `undefined`. The program's entry point is usually a boundary file too: it creates the real clock and `fetch` and passes them in.
+An IO file is a thin wrapper. It calls the outside API, catches its errors, and exports plain functions that return `Result` or `undefined`. The program's entry point is usually an IO file too: it creates the real clock and `fetch` and passes them in.
 
-Keep these files small. Anything in them is not checked.
+Keep IO files small. Anything in them is not checked.
 
 ## Install
 
-Copy `src/` into your project, for example to `tools/oxlint/anti-slop-gleam/`. Then install these three packages at matching versions:
+Copy `src/` into your project, for example to `tools/oxlint/fp/`. Then install these three packages at matching versions:
 - `oxlint`
 - `@oxlint/plugins`
 - `oxlint-tsgolint`
@@ -56,15 +56,15 @@ Finally, extend the config:
 
 ```json
 {
-  "extends": ["./tools/oxlint/anti-slop-gleam/config.json"],
-  "ignorePatterns": ["tools/oxlint/anti-slop-gleam/**"]
+  "extends": ["./tools/oxlint/fp/config.json"],
+  "ignorePatterns": ["tools/oxlint/fp/**"]
 }
 ```
 
-Or let an agent do it with the [install skill](skills/install-anti-slop-gleam/SKILL.md).
+Or let an agent do it with the [install skill](skills/install-fp-rules/SKILL.md).
 
 Then:
-1. Add [conventions.md](skills/install-anti-slop-gleam/references/conventions.md) to your `AGENTS.md`. It tells agents how to write the dialect before they hit a lint error.
+1. Add [conventions.md](skills/install-fp-rules/references/conventions.md) to your `AGENTS.md`. It tells agents how to write this style before they hit a lint error.
 2. Run Oxlint with `--format default`, so a clean run still prints something.
 3. Turn on `strict`, `exactOptionalPropertyTypes`, and `noUncheckedIndexedAccess` in `tsconfig.json`.
 4. Use a schema library such as [Zod](https://zod.dev) to check data coming into the program.
@@ -91,7 +91,7 @@ pnpm check       # lint, test, typecheck, and sync checks
 pnpm sync:skill  # run after changing src/
 ```
 
-The rules' own source follows the dialect and is linted with `src/config.json`.
+The rules' own source follows the rules and is linted with `src/config.json`.
 
 ## Origin
 
